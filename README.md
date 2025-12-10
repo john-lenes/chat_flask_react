@@ -253,7 +253,7 @@ MAX_FILE_SIZE = 5 * 1024 * 1024  # Altere para o tamanho desejado
 
 Este projeto é de uso livre para fins educacionais.
 
-## 👤 Autor
+## 👤 Autor John Lenes Silva
 
 Desenvolvido como projeto de chat em tempo real com Flask e React.
 
