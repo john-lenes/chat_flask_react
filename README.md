@@ -11,13 +11,24 @@ Sistema de chat em tempo real com Flask (backend) e React (frontend), utilizando
 - ✅ Indicador de digitação
 - ✅ Lista de usuários online
 - ✅ Sistema de status (Online, Ausente, Ocupado)
+- ✅ Cache de mensagens por sala (preserva histórico ao trocar de sala)
 
 ### Recursos Avançados
 - ✅ **Mensagens Privadas (DM)**: Use `/dm username mensagem`
 - ✅ **Reações**: 6 emojis disponíveis (👍 ❤️ 😂 🎉 😮 😢)
 - ✅ **Upload de Arquivos**: Envie imagens (preview automático) e documentos (até 5MB)
 - ✅ **Notificações Desktop**: Receba alertas quando alguém mencionar você
-- ✅ **Modo Escuro**: Interface adaptável
+- ✅ **Modo Escuro**: Interface adaptável com paleta Slate
+
+### 🆕 Melhorias de Usabilidade (v2.0)
+- ✅ **Enter para Enviar**: Pressione Enter para enviar, Shift+Enter para nova linha
+- ✅ **Edição de Mensagens**: Edite suas próprias mensagens (botão ✏️ no hover)
+- ✅ **Exclusão de Mensagens**: Delete suas mensagens (botão 🗑️ no hover)
+- ✅ **@ Menções**: Autocompletar usuários ao digitar @ + nome
+- ✅ **Timestamps Hover**: Veja data/hora completa ao passar o mouse
+- ✅ **Scroll Inteligente**: Botão para voltar às mensagens recentes
+- ✅ **Feedback Visual**: Indicador de envio de mensagem
+- ✅ **Confirmação ao Sair**: Previne perda acidental de conversas
 
 ### Comandos Disponíveis
 
