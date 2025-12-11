@@ -12,7 +12,7 @@ body {
 }
 
 body.dark-mode {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
 }
 
 .chat-container {
@@ -27,8 +27,8 @@ body.dark-mode {
 }
 
 .chat-container.dark-mode {
-    background: #0f0f1e;
-    color: #e0e0e0;
+    background: #1e293b;
+    color: #f1f5f9;
 }
 
 /* Join Screen */
@@ -41,7 +41,7 @@ body.dark-mode {
 }
 
 .dark-mode .join-screen {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
 }
 
 .join-box {
@@ -55,8 +55,9 @@ body.dark-mode {
 }
 
 .dark-mode .join-box {
-    background: #1e1e2e;
-    color: #e0e0e0;
+    background: #334155;
+    color: #f1f5f9;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
 
 .room-selector {
@@ -72,7 +73,7 @@ body.dark-mode {
 }
 
 .dark-mode .room-selector label {
-    color: #b0b0b0;
+    color: #cbd5e1;
 }
 
 .room-selector select {
@@ -86,9 +87,9 @@ body.dark-mode {
 }
 
 .dark-mode .room-selector select {
-    background: #2a2a3e;
-    border-color: #3a3a4e;
-    color: #e0e0e0;
+    background: #475569;
+    border-color: #64748b;
+    color: #f1f5f9;
 }
 
 .theme-toggle {
@@ -116,7 +117,7 @@ body.dark-mode {
 }
 
 .dark-mode .chat-header {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    background: linear-gradient(135deg, #334155 0%, #475569 100%);
 }
 
 .room-badge {
@@ -155,8 +156,9 @@ body.dark-mode {
 }
 
 .dark-mode .settings-panel {
-    background: #1a1a2e;
-    border-color: #2a2a3e;
+    background: #334155;
+    border-color: #475569;
+    color: #f1f5f9;
 }
 
 .setting-item {
@@ -200,8 +202,8 @@ body.dark-mode {
 }
 
 .dark-mode .rooms-sidebar {
-    background: #16213e;
-    border-color: #1a1a2e;
+    background: #334155;
+    border-color: #475569;
 }
 
 .rooms-sidebar h3 {
@@ -224,7 +226,7 @@ body.dark-mode {
 }
 
 .dark-mode .room-item {
-    color: #b0b0b0;
+    color: #cbd5e1;
 }
 
 .room-item:hover {
@@ -303,8 +305,9 @@ body.dark-mode {
 }
 
 .dark-mode .command-message {
-    background: #1a2a3e;
+    background: #475569;
     border-color: #667eea;
+    color: #f1f5f9;
 }
 
 .command-message.error {
@@ -313,7 +316,8 @@ body.dark-mode {
 }
 
 .dark-mode .command-message.error {
-    background: #2e1a1a;
+    background: #7f1d1d;
+    color: #fecaca;
 }
 
 .command-message pre {
@@ -403,7 +407,8 @@ body.dark-mode {
 }
 
 .dark-mode .emoji-picker {
-    background: #2a2a3e;
+    background: #475569;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.6);
 }
 
 @keyframes slideUp {
@@ -430,7 +435,7 @@ body.dark-mode {
 }
 
 .dark-mode .emoji-picker span:hover {
-    background: #3a3a4e;
+    background: #64748b;
 }
 
 /* Message Form */
@@ -444,8 +449,8 @@ body.dark-mode {
 }
 
 .dark-mode .message-form {
-    background: #16213e;
-    border-color: #1a1a2e;
+    background: #334155;
+    border-color: #475569;
 }
 
 /* Responsive */
@@ -529,6 +534,10 @@ body.dark-mode {
     font-size: 16px;
 }
 
+.dark-mode .join-box p {
+    color: #cbd5e1;
+}
+
 .username-input {
     width: 100%;
     padding: 15px 20px;
@@ -539,10 +548,21 @@ body.dark-mode {
     transition: all 0.3s ease;
 }
 
+.dark-mode .username-input {
+    background: #475569;
+    border-color: #64748b;
+    color: #f1f5f9;
+}
+
 .username-input:focus {
     outline: none;
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.dark-mode .username-input:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
 }
 
 .join-button {
@@ -623,6 +643,10 @@ body.dark-mode {
     background: #f5f5f5;
 }
 
+.dark-mode .messages-container {
+    background: #1e293b;
+}
+
 .messages-container::-webkit-scrollbar {
     width: 8px;
 }
@@ -631,13 +655,25 @@ body.dark-mode {
     background: #f1f1f1;
 }
 
+.dark-mode .messages-container::-webkit-scrollbar-track {
+    background: #334155;
+}
+
 .messages-container::-webkit-scrollbar-thumb {
     background: #888;
     border-radius: 4px;
 }
 
+.dark-mode .messages-container::-webkit-scrollbar-thumb {
+    background: #64748b;
+}
+
 .messages-container::-webkit-scrollbar-thumb:hover {
     background: #555;
+}
+
+.dark-mode .messages-container::-webkit-scrollbar-thumb:hover {
+    background: #818cf8;
 }
 
 /* Messages */
@@ -649,6 +685,11 @@ body.dark-mode {
     max-width: 70%;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     animation: messageIn 0.3s ease-out;
+}
+
+.dark-mode .message {
+    background: #334155;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
 @keyframes messageIn {
@@ -678,6 +719,11 @@ body.dark-mode {
 .message-username {
     font-weight: 600;
     font-size: 14px;
+    color: #475569;
+}
+
+.dark-mode .message-username {
+    color: #cbd5e1;
 }
 
 .own-message .message-username {
@@ -693,6 +739,11 @@ body.dark-mode {
     font-size: 15px;
     line-height: 1.4;
     word-wrap: break-word;
+    color: #1e293b;
+}
+
+.dark-mode .message-text {
+    color: #f1f5f9;
 }
 
 /* System Messages */
@@ -705,10 +756,19 @@ body.dark-mode {
     font-style: italic;
 }
 
+.dark-mode .system-message {
+    color: #94a3b8;
+}
+
 .system-message span {
     background: rgba(102, 126, 234, 0.1);
     padding: 5px 15px;
     border-radius: 15px;
+}
+
+.dark-mode .system-message span {
+    background: rgba(129, 140, 248, 0.2);
+    color: #cbd5e1;
 }
 
 /* Typing Indicator */
@@ -747,10 +807,25 @@ body.dark-mode {
     transition: all 0.3s ease;
 }
 
+.dark-mode .message-input {
+    background: #475569;
+    border-color: #64748b;
+    color: #f1f5f9;
+}
+
 .message-input:focus {
     outline: none;
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.dark-mode .message-input:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
+}
+
+.dark-mode .message-input::placeholder {
+    color: #94a3b8;
 }
 
 .send-button {
@@ -912,8 +987,9 @@ body.dark-mode {
 }
 
 .dark-mode .users-modal-content {
-    background: #1e1e2e;
-    color: #e0e0e0;
+    background: #334155;
+    color: #f1f5f9;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
 }
 
 .users-modal-content h3 {
@@ -939,7 +1015,7 @@ body.dark-mode {
 }
 
 .dark-mode .user-item {
-    background: #2a2a3e;
+    background: #475569;
 }
 
 .user-item:hover {
