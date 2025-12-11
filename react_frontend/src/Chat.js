@@ -59,6 +59,11 @@ const Chat = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [showSearch, setShowSearch] = useState(false);
     const [searchResults, setSearchResults] = useState([]);
+    const [theme, setTheme] = useState(localStorage.getItem('chatTheme') || 'default');
+    const [unreadCounts, setUnreadCounts] = useState({});
+    const [pinnedMessages, setPinnedMessages] = useState([]);
+    const [showPinned, setShowPinned] = useState(false);
+    const [showFormatToolbar, setShowFormatToolbar] = useState(false);
     const messagesEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
     const audioRef = useRef(null);
@@ -66,6 +71,15 @@ const Chat = () => {
     const messageInputRef = useRef(null);
     const messagesContainerRef = useRef(null);
     const dropZoneRef = useRef(null);
+
+    const THEMES = {
+        default: { name: 'Padrão', primary: '#667eea', secondary: '#764ba2' },
+        ocean: { name: 'Oceano', primary: '#2196F3', secondary: '#00BCD4' },
+        forest: { name: 'Floresta', primary: '#4CAF50', secondary: '#8BC34A' },
+        sunset: { name: 'Pôr do Sol', primary: '#FF5722', secondary: '#FF9800' },
+        purple: { name: 'Roxo Espaço', primary: '#9C27B0', secondary: '#E91E63' },
+        amoled: { name: 'AMOLED', primary: '#BB86FC', secondary: '#03DAC6' }
+    };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -205,6 +219,15 @@ const Chat = () => {
                 }));
                 return updated;
             });
+            
+            // Incrementar contador de não lidas se não estiver na sala
+            if (msg.room && msg.room !== currentRoom && msg.username !== username) {
+                setUnreadCounts(prev => ({
+                    ...prev,
+                    [msg.room]: (prev[msg.room] || 0) + 1
+                }));
+            }
+            
             if (msg.username !== username) {
                 playNotificationSound();
                 showNotification('Nova mensagem', `${msg.username}: ${msg.message}`);
@@ -489,6 +512,8 @@ const Chat = () => {
     const changeRoom = (newRoom) => {
         if (newRoom !== currentRoom) {
             socket.emit('change_room', { room: newRoom });
+            // Marcar sala como lida ao entrar
+            markRoomAsRead(newRoom);
         }
     };
 
@@ -588,6 +613,125 @@ const Chat = () => {
         return text.includes(`@${username}`);
     };
 
+    // Text formatting functions
+    const formatText = (text) => {
+        if (!text) return text;
+        
+        // Bold: **text** or __text__
+        text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        text = text.replace(/__(.*?)__/g, '<strong>$1</strong>');
+        
+        // Italic: *text* or _text_
+        text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        text = text.replace(/_(.*?)_/g, '<em>$1</em>');
+        
+        // Code: `text`
+        text = text.replace(/`(.*?)`/g, '<code>$1</code>');
+        
+        // Strike: ~~text~~
+        text = text.replace(/~~(.*?)~~/g, '<del>$1</del>');
+        
+        return text;
+    };
+
+    const insertFormatting = (format) => {
+        const textarea = messageInputRef.current;
+        if (!textarea) return;
+        
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = message.substring(start, end);
+        
+        let formattedText = '';
+        switch(format) {
+            case 'bold':
+                formattedText = `**${selectedText || 'texto'}**`;
+                break;
+            case 'italic':
+                formattedText = `*${selectedText || 'texto'}*`;
+                break;
+            case 'code':
+                formattedText = `\`${selectedText || 'código'}\``;
+                break;
+            case 'strike':
+                formattedText = `~~${selectedText || 'texto'}~~`;
+                break;
+            default:
+                return;
+        }
+        
+        const newMessage = message.substring(0, start) + formattedText + message.substring(end);
+        setMessage(newMessage);
+        setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start + formattedText.length, start + formattedText.length);
+        }, 0);
+    };
+
+    // Theme management
+    const changeTheme = (newTheme) => {
+        setTheme(newTheme);
+        localStorage.setItem('chatTheme', newTheme);
+        document.documentElement.style.setProperty('--theme-primary', THEMES[newTheme].primary);
+        document.documentElement.style.setProperty('--theme-secondary', THEMES[newTheme].secondary);
+    };
+
+    useEffect(() => {
+        changeTheme(theme);
+    }, []);
+
+    // Unread counter
+    const markRoomAsRead = (room) => {
+        setUnreadCounts(prev => ({ ...prev, [room]: 0 }));
+    };
+
+    useEffect(() => {
+        if (joined && currentRoom) {
+            markRoomAsRead(currentRoom);
+        }
+    }, [currentRoom, messages, joined]);
+
+    // Pin/Unpin messages
+    const togglePin = (msg) => {
+        const isPinned = pinnedMessages.some(p => p.id === msg.id);
+        if (isPinned) {
+            setPinnedMessages(prev => prev.filter(p => p.id !== msg.id));
+        } else {
+            setPinnedMessages(prev => [...prev, msg]);
+        }
+    };
+
+    // Quick reaction
+    const quickReaction = (messageId, emoji) => {
+        addReaction(messageId, emoji);
+    };
+
+    // Link preview
+    const detectLinks = (text) => {
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        return text.match(urlRegex) || [];
+    };
+
+    const renderMessageWithLinks = (msg) => {
+        const links = detectLinks(msg.message);
+        if (links.length === 0) {
+            return <div className="message-text" dangerouslySetInnerHTML={{ __html: formatText(msg.message) }} />;
+        }
+
+        return (
+            <>
+                <div className="message-text" dangerouslySetInnerHTML={{ __html: formatText(msg.message) }} />
+                {links.map((link, index) => (
+                    <div key={index} className="link-preview-card">
+                        <a href={link} target="_blank" rel="noopener noreferrer" className="link-preview-url">
+                            🔗 {link.length > 50 ? link.substring(0, 50) + '...' : link}
+                        </a>
+                    </div>
+                ))}
+            </>
+        );
+    };
+
     // Drag and Drop handlers
     const handleDragEnter = (e) => {
         e.preventDefault();
@@ -674,6 +818,11 @@ const Chat = () => {
         setSearchResults([]);
         setShowSearch(false);
     };
+
+    // Apply theme to body
+    React.useEffect(() => {
+        document.body.className = `theme-${theme}`;
+    }, [theme]);
 
     if (!joined) {
         return (
@@ -763,6 +912,24 @@ const Chat = () => {
                 </div>
             )}
 
+            {showPinned && pinnedMessages.length > 0 && (
+                <div className="pinned-banner">
+                    <div className="pinned-header">
+                        <span>📌 Mensagens Fixadas ({pinnedMessages.length})</span>
+                        <button onClick={() => setShowPinned(false)}>✗</button>
+                    </div>
+                    <div className="pinned-list">
+                        {pinnedMessages.map(msg => (
+                            <div key={msg.id} className="pinned-item">
+                                <span className="pinned-user">{msg.username}:</span>
+                                <span className="pinned-text">{msg.message.substring(0, 50)}{msg.message.length > 50 ? '...' : ''}</span>
+                                <button onClick={() => togglePin(msg)} className="unpin-btn" title="Desafixar">✗</button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
             {showUsersList && (
                 <div className="users-modal" onClick={() => setShowUsersList(false)}>
                     <div className="users-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -818,6 +985,26 @@ const Chat = () => {
                         </label>
                     </div>
                     <div className="setting-item">
+                        <label>🎨 Tema:</label>
+                        <div className="theme-selector">
+                            {Object.keys(THEMES).map(themeName => (
+                                <button
+                                    key={themeName}
+                                    className={`theme-option ${theme === themeName ? 'active' : ''}`}
+                                    onClick={() => changeTheme(themeName)}
+                                    title={THEMES[themeName].name}
+                                    style={{
+                                        backgroundColor: THEMES[themeName].primary,
+                                        border: theme === themeName ? '3px solid #fff' : '2px solid transparent'
+                                    }}
+                                >
+                                    {themeName === theme && '✓'}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="theme-name">{THEMES[theme].name}</div>
+                    </div>
+                    <div className="setting-item">
                         <label>
                             <input
                                 type="checkbox"
@@ -832,6 +1019,11 @@ const Chat = () => {
                             />
                             🔔 Notificações Desktop
                         </label>
+                    </div>
+                    <div className="setting-item">
+                        <button onClick={() => setShowPinned(!showPinned)}>
+                            📌 {showPinned ? 'Ocultar' : 'Ver'} Mensagens Fixadas
+                        </button>
                     </div>
                     <div className="setting-item">
                         <button onClick={() => socket.emit('message', { message: '/help' })}>
@@ -852,6 +1044,9 @@ const Chat = () => {
                                 onClick={() => changeRoom(room)}
                             >
                                 # {room}
+                                {unreadCounts[room] > 0 && (
+                                    <span className="unread-badge">{unreadCounts[room]}</span>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -986,11 +1181,14 @@ const Chat = () => {
                                             </div>
                                         ) : (
                                             <>
-                                                <div className="message-text">{msg.message}</div>
+                                                {renderMessageWithLinks(msg)}
                                                 {msg.edited && <span className="edited-badge"> (editado)</span>}
                                             </>
                                         )}
                                         <div className="message-actions">
+                                            <button onClick={() => togglePin(msg)} title={pinnedMessages.some(p => p.id === msg.id) ? 'Desafixar' : 'Fixar mensagem'}>
+                                                {pinnedMessages.some(p => p.id === msg.id) ? '📌' : '📍'}
+                                            </button>
                                             <button 
                                                 className="action-btn reply-btn" 
                                                 onClick={() => startReply(msg)}
@@ -1035,6 +1233,18 @@ const Chat = () => {
                                                     {emoji} {users.length}
                                                 </button>
                                             ))}
+                                            <div className="quick-reactions">
+                                                {['❤️', '👍', '😂', '😮', '😢', '😡'].map(emoji => (
+                                                    <button
+                                                        key={emoji}
+                                                        onClick={() => quickReaction(msg.id, emoji)}
+                                                        className="quick-reaction-btn"
+                                                        title={`Reagir com ${emoji}`}
+                                                    >
+                                                        {emoji}
+                                                    </button>
+                                                ))}
+                                            </div>
                                             <div className="add-reaction">
                                                 {REACTION_EMOJIS.map(emoji => (
                                                     <button
@@ -1083,6 +1293,22 @@ const Chat = () => {
                     )}
 
                     <form onSubmit={sendMessage} className="message-form">
+                        {showFormatToolbar && (
+                            <div className="format-toolbar">
+                                <button type="button" onClick={() => insertFormatting('**', '**')} className="format-btn" title="Negrito">
+                                    <strong>B</strong>
+                                </button>
+                                <button type="button" onClick={() => insertFormatting('*', '*')} className="format-btn" title="Itálico">
+                                    <em>I</em>
+                                </button>
+                                <button type="button" onClick={() => insertFormatting('~~', '~~')} className="format-btn" title="Tachado">
+                                    <del>S</del>
+                                </button>
+                                <button type="button" onClick={() => insertFormatting('`', '`')} className="format-btn" title="Código">
+                                    {'<>'}
+                                </button>
+                            </div>
+                        )}
                         <input 
                             type="file" 
                             ref={fileInputRef}
@@ -1090,6 +1316,14 @@ const Chat = () => {
                             onChange={handleFileUpload}
                             accept="image/*,application/pdf,.doc,.docx,.txt"
                         />
+                        <button
+                            type="button"
+                            className="format-toggle-btn"
+                            onClick={() => setShowFormatToolbar(!showFormatToolbar)}
+                            title="Ferramentas de formatação"
+                        >
+                            🎨
+                        </button>
                         <button
                             type="button"
                             className="file-btn"
