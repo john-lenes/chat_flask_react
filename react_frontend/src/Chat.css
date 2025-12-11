@@ -1774,3 +1774,74 @@ body.dark-mode {
 .message-time:hover {
     text-decoration: underline;
 }
+
+/* Copy Notification */
+.copy-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #10b981;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    z-index: 10000;
+    animation: slideIn 0.3s ease, fadeOut 0.3s ease 1.7s;
+    font-weight: 500;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+/* Copy Button */
+.copy-btn {
+    opacity: 0.7;
+}
+
+.copy-btn:hover {
+    background: rgba(16, 185, 129, 0.2);
+    opacity: 1;
+}
+
+/* Mentioned Message Highlight */
+.message.mentioned {
+    background: rgba(234, 179, 8, 0.1);
+    border-left: 3px solid #eab308;
+    padding-left: 12px;
+}
+
+.dark-mode .message.mentioned {
+    background: rgba(234, 179, 8, 0.15);
+    border-left-color: #facc15;
+}
+
+.message.mentioned .message-content {
+    position: relative;
+}
+
+.message.mentioned::before {
+    content: '👋';
+    position: absolute;
+    left: -25px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 16px;
+    opacity: 0.8;
+}

@@ -436,6 +436,12 @@ const Chat = () => {
         setMessage(value);
         handleTyping();
 
+        // Auto-resize textarea
+        if (messageInputRef.current) {
+            messageInputRef.current.style.height = 'auto';
+            messageInputRef.current.style.height = Math.min(messageInputRef.current.scrollHeight, 120) + 'px';
+        }
+
         // Check for @ mentions
         const lastWord = value.split(/\s/).pop();
         if (lastWord.startsWith('@') && lastWord.length > 1) {
@@ -545,6 +551,24 @@ const Chat = () => {
         if (window.confirm('Deseja deletar esta mensagem?')) {
             socket.emit('delete_message', { message_id: messageId });
         }
+    };
+
+    const copyMessage = (text) => {
+        navigator.clipboard.writeText(text).then(() => {
+            // Visual feedback
+            const notification = document.createElement('div');
+            notification.className = 'copy-notification';
+            notification.textContent = '✓ Copiado!';
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 2000);
+        }).catch(err => {
+            console.error('Erro ao copiar:', err);
+        });
+    };
+
+    const isMentioned = (text) => {
+        if (!text || !username) return false;
+        return text.includes(`@${username}`);
     };
 
     if (!joined) {
@@ -779,7 +803,7 @@ const Chat = () => {
                                 );
                             }
                             return (
-                                <div key={msg.id || index} className={`message ${msg.username === username ? 'own-message' : ''}`}>
+                                <div key={msg.id || index} className={`message ${msg.username === username ? 'own-message' : ''} ${isMentioned(msg.message) ? 'mentioned' : ''}`}>
                                     <div className="message-avatar" style={{backgroundColor: msg.color}}>
                                         {msg.username.charAt(0).toUpperCase()}
                                     </div>
@@ -817,6 +841,13 @@ const Chat = () => {
                                             </>
                                         )}
                                         <div className="message-actions">
+                                            <button 
+                                                className="action-btn copy-btn" 
+                                                onClick={() => copyMessage(msg.message)}
+                                                title="Copiar mensagem"
+                                            >
+                                                📋
+                                            </button>
                                             {msg.username === username && editingMessageId !== msg.id && msg.type !== 'system' && (
                                                 <>
                                                     <button 
