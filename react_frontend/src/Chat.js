@@ -13,6 +13,7 @@ const Chat = () => {
     const [joined, setJoined] = useState(false);
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
+    const [roomMessages, setRoomMessages] = useState({}); // Cache de mensagens por sala
     const [usersOnline, setUsersOnline] = useState(0);
     const [typingUsers, setTypingUsers] = useState([]);
     const [currentRoom, setCurrentRoom] = useState('geral');
@@ -37,6 +38,14 @@ const Chat = () => {
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
+
+    // Carregar mensagens do cache quando mudar de sala
+    useEffect(() => {
+        if (roomMessages[currentRoom] && roomMessages[currentRoom].length > 0) {
+            console.log('Carregando mensagens do cache para sala:', currentRoom);
+            setMessages(roomMessages[currentRoom]);
+        }
+    }, [currentRoom, roomMessages]);
 
     useEffect(() => {
         if (darkMode) {
@@ -85,7 +94,15 @@ const Chat = () => {
         // Receber nova mensagem
         socket.on('message', (msg) => {
             console.log('Mensagem recebida:', msg);
-            setMessages((prev) => [...prev, msg]);
+            setMessages((prev) => {
+                const updated = [...prev, msg];
+                // Atualizar cache da sala atual
+                setRoomMessages(cache => ({
+                    ...cache,
+                    [currentRoom]: updated
+                }));
+                return updated;
+            });
             if (msg.username !== username) {
                 playNotificationSound();
                 showNotification('Nova mensagem', `${msg.username}: ${msg.message}`);
@@ -94,7 +111,14 @@ const Chat = () => {
 
         // Mensagem privada
         socket.on('private_message', (dm) => {
-            setMessages((prev) => [...prev, dm]);
+            setMessages((prev) => {
+                const updated = [...prev, dm];
+                setRoomMessages(cache => ({
+                    ...cache,
+                    [currentRoom]: updated
+                }));
+                return updated;
+            });
             playNotificationSound();
             showNotification(`Mensagem privada de ${dm.from}`, dm.message);
         });
@@ -115,22 +139,36 @@ const Chat = () => {
         // Usuário entrou
         socket.on('user_joined', (data) => {
             setUsersOnline(data.users_online);
-            setMessages((prev) => [...prev, {
-                type: 'system',
-                message: `${data.username} entrou no chat`,
-                timestamp: data.timestamp
-            }]);
+            setMessages((prev) => {
+                const updated = [...prev, {
+                    type: 'system',
+                    message: `${data.username} entrou no chat`,
+                    timestamp: data.timestamp
+                }];
+                setRoomMessages(cache => ({
+                    ...cache,
+                    [currentRoom]: updated
+                }));
+                return updated;
+            });
             playNotificationSound();
         });
 
         // Usuário saiu
         socket.on('user_left', (data) => {
             setUsersOnline(data.users_online);
-            setMessages((prev) => [...prev, {
-                type: 'system',
-                message: `${data.username} saiu do chat`,
-                timestamp: data.timestamp
-            }]);
+            setMessages((prev) => {
+                const updated = [...prev, {
+                    type: 'system',
+                    message: `${data.username} saiu do chat`,
+                    timestamp: data.timestamp
+                }];
+                setRoomMessages(cache => ({
+                    ...cache,
+                    [currentRoom]: updated
+                }));
+                return updated;
+            });
         });
 
         // Indicador de digitação
@@ -150,29 +188,59 @@ const Chat = () => {
         // Mudança de sala
         socket.on('room_changed', (data) => {
             console.log('Sala alterada para:', data.room);
+            // Salvar mensagens da sala atual antes de mudar
+            setRoomMessages(prev => ({
+                ...prev,
+                [currentRoom]: messages
+            }));
+            
             setCurrentRoom(data.room);
-            setMessages([]); // Limpar mensagens ao trocar de sala
+            
+            // Carregar mensagens da nova sala do cache (se existirem)
+            setMessages([]); // Limpa temporariamente
         });
 
         // Receber histórico quando entrar em sala
         socket.on('message_history', (history) => {
             console.log('Histórico recebido:', history.length, 'mensagens');
+            // Se temos cache, mesclar com o histórico do servidor
+            setRoomMessages(prev => {
+                const cachedMessages = prev[currentRoom] || [];
+                // Usar histórico do servidor se for mais recente/completo
+                const finalMessages = history.length > 0 ? history : cachedMessages;
+                return {
+                    ...prev,
+                    [currentRoom]: finalMessages
+                };
+            });
             setMessages(history);
         });
 
         // Resposta de comando
         socket.on('command_response', (data) => {
-            setMessages((prev) => [...prev, {
-                type: 'command',
-                message: data.message,
-                commandType: data.type,
-                timestamp: new Date().toISOString()
-            }]);
+            setMessages((prev) => {
+                const updated = [...prev, {
+                    type: 'command',
+                    message: data.message,
+                    commandType: data.type,
+                    timestamp: new Date().toISOString()
+                }];
+                setRoomMessages(cache => ({
+                    ...cache,
+                    [currentRoom]: updated
+                }));
+                return updated;
+            });
         });
 
         // Limpar mensagens
         socket.on('clear_messages', () => {
             setMessages([]);
+            // Limpar cache da sala atual
+            setRoomMessages(cache => ({
+                ...cache,
+                [currentRoom]: []
+            }));
         });
 
         return () => {
