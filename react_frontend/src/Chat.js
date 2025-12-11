@@ -54,12 +54,18 @@ const Chat = () => {
     const [showScrollButton, setShowScrollButton] = useState(false);
     const [mentionSuggestions, setMentionSuggestions] = useState([]);
     const [showMentions, setShowMentions] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+    const [replyTo, setReplyTo] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showSearch, setShowSearch] = useState(false);
+    const [searchResults, setSearchResults] = useState([]);
     const messagesEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
     const audioRef = useRef(null);
     const fileInputRef = useRef(null);
     const messageInputRef = useRef(null);
     const messagesContainerRef = useRef(null);
+    const dropZoneRef = useRef(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -415,10 +421,21 @@ const Chat = () => {
         if (message.trim() && !isSending) {
             console.log('Enviando mensagem:', message.trim());
             setIsSending(true);
-            socket.emit('message', { message: message.trim() });
+            
+            const messageData = {
+                message: message.trim(),
+                replyTo: replyTo ? {
+                    id: replyTo.id,
+                    username: replyTo.username,
+                    message: replyTo.message.substring(0, 50) // Preview
+                } : null
+            };
+            
+            socket.emit('message', messageData);
             socket.emit('typing', { is_typing: false });
             setMessage('');
             setShowEmojiPicker(false);
+            setReplyTo(null);
             setTimeout(() => setIsSending(false), 500);
         }
     };
@@ -571,6 +588,93 @@ const Chat = () => {
         return text.includes(`@${username}`);
     };
 
+    // Drag and Drop handlers
+    const handleDragEnter = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.target === dropZoneRef.current) {
+            setIsDragging(false);
+        }
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        const files = e.dataTransfer.files;
+        if (files && files[0]) {
+            const file = files[0];
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Arquivo muito grande! Máximo 5MB');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                const fileData = reader.result;
+                const fileType = file.type.startsWith('image/') ? 'image' : 'file';
+                
+                socket.emit('upload_file', {
+                    file: fileData,
+                    filename: file.name,
+                    type: fileType
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    // Reply handlers
+    const startReply = (msg) => {
+        setReplyTo(msg);
+        messageInputRef.current?.focus();
+    };
+
+    const cancelReply = () => {
+        setReplyTo(null);
+    };
+
+    // Search handlers
+    const handleSearch = (query) => {
+        setSearchQuery(query);
+        if (!query.trim()) {
+            setSearchResults([]);
+            return;
+        }
+
+        const results = messages.filter(msg => 
+            msg.message && msg.message.toLowerCase().includes(query.toLowerCase())
+        );
+        setSearchResults(results);
+    };
+
+    const scrollToMessage = (index) => {
+        const messageElements = messagesContainerRef.current?.children;
+        if (messageElements && messageElements[index]) {
+            messageElements[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            messageElements[index].classList.add('highlight-flash');
+            setTimeout(() => messageElements[index].classList.remove('highlight-flash'), 2000);
+        }
+    };
+
+    const clearSearch = () => {
+        setSearchQuery('');
+        setSearchResults([]);
+        setShowSearch(false);
+    };
+
     if (!joined) {
         return (
             <div className={`chat-container ${darkMode ? 'dark-mode' : ''}`}>
@@ -627,6 +731,9 @@ const Chat = () => {
                     </p>
                 </div>
                 <div className="header-actions">
+                    <button className="search-btn" onClick={() => setShowSearch(!showSearch)} title="Pesquisar mensagens">
+                        🔍
+                    </button>
                     <div className="online-users" onClick={() => setShowUsersList(!showUsersList)}>
                         <span className={`online-dot ${connectionStatus === 'connected' ? 'connected' : ''}`}></span>
                         {onlineUsers.length} online
@@ -636,6 +743,25 @@ const Chat = () => {
                     </button>
                 </div>
             </div>
+
+            {showSearch && (
+                <div className="search-bar">
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => handleSearch(e.target.value)}
+                        placeholder="Pesquisar mensagens..."
+                        className="search-input"
+                        autoFocus
+                    />
+                    <button className="clear-search-btn" onClick={clearSearch}>✗</button>
+                    {searchResults.length > 0 && (
+                        <div className="search-results-count">
+                            {searchResults.length} resultado{searchResults.length !== 1 ? 's' : ''}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {showUsersList && (
                 <div className="users-modal" onClick={() => setShowUsersList(false)}>
@@ -734,7 +860,22 @@ const Chat = () => {
                     </button>
                 </div>
 
-                <div className="messages-area">
+                <div className="messages-area"
+                    ref={dropZoneRef}
+                    onDragEnter={handleDragEnter}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                >
+                    {isDragging && (
+                        <div className="drop-overlay">
+                            <div className="drop-message">
+                                <div className="drop-icon">📎</div>
+                                <div>Solte o arquivo aqui para enviar</div>
+                                <div className="drop-hint">(máximo 5MB)</div>
+                            </div>
+                        </div>
+                    )}
                     <div className="messages-container" ref={messagesContainerRef} onScroll={handleScroll}>
                         {messages.map((msg, index) => {
                             if (msg.type === 'system') {
@@ -816,6 +957,15 @@ const Chat = () => {
                                                 {formatTime(msg.timestamp)}
                                             </span>
                                         </div>
+                                        {msg.replyTo && (
+                                            <div className="reply-preview">
+                                                <div className="reply-bar"></div>
+                                                <div className="reply-content">
+                                                    <span className="reply-username">{msg.replyTo.username}</span>
+                                                    <span className="reply-text">{msg.replyTo.message}</span>
+                                                </div>
+                                            </div>
+                                        )}
                                         {editingMessageId === msg.id ? (
                                             <div className="message-edit-container">
                                                 <input
@@ -841,6 +991,13 @@ const Chat = () => {
                                             </>
                                         )}
                                         <div className="message-actions">
+                                            <button 
+                                                className="action-btn reply-btn" 
+                                                onClick={() => startReply(msg)}
+                                                title="Responder"
+                                            >
+                                                ↩️
+                                            </button>
                                             <button 
                                                 className="action-btn copy-btn" 
                                                 onClick={() => copyMessage(msg.message)}
@@ -911,6 +1068,18 @@ const Chat = () => {
                         <button className="scroll-to-bottom" onClick={scrollToBottom} title="Rolar para baixo">
                             ⬇️
                         </button>
+                    )}
+
+                    {replyTo && (
+                        <div className="reply-bar-container">
+                            <div className="reply-bar-content">
+                                <div className="reply-bar-left">
+                                    <span className="reply-bar-label">Respondendo a {replyTo.username}</span>
+                                    <span className="reply-bar-text">{replyTo.message.substring(0, 50)}...</span>
+                                </div>
+                                <button className="reply-bar-close" onClick={cancelReply}>✗</button>
+                            </div>
+                        </div>
                     )}
 
                     <form onSubmit={sendMessage} className="message-form">

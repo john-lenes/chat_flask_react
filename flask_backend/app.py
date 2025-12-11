@@ -148,6 +148,7 @@ def handle_message(data):
         message_text = data
     else:
         message_text = data.get('message', '')
+        reply_to = data.get('replyTo')
     
     print(f'DEBUG: Texto da mensagem: {message_text}')
     
@@ -162,7 +163,8 @@ def handle_message(data):
         'timestamp': datetime.now().isoformat(),
         'color': color,
         'id': len(rooms[room]),
-        'type': 'message'
+        'type': 'message',
+        'replyTo': reply_to
     }
     
     # Adicionar ao histórico da sala
