@@ -449,5 +449,63 @@ def handle_change_room(data):
     
     print(f'{username} mudou de {old_room} para {new_room}')
 
+@socketio.on('edit_message')
+def handle_edit_message(data):
+    if request.sid not in connected_users:
+        return
+    
+    message_id = data.get('message_id')
+    new_text = data.get('new_text', '').strip()
+    user_data = connected_users[request.sid]
+    room = user_data['room']
+    username = user_data['username']
+    
+    if not new_text or message_id is None:
+        return
+    
+    # Encontrar e atualizar a mensagem
+    if room in rooms and message_id < len(rooms[room]):
+        message = rooms[room][message_id]
+        if message.get('username') == username:
+            message['message'] = new_text
+            message['edited'] = True
+            message['edited_at'] = datetime.now().isoformat()
+            
+            emit('message_edited', {
+                'message_id': message_id,
+                'new_text': new_text,
+                'edited': True
+            }, room=room)
+            print(f'{username} editou mensagem {message_id}')
+
+@socketio.on('delete_message')
+def handle_delete_message(data):
+    if request.sid not in connected_users:
+        return
+    
+    message_id = data.get('message_id')
+    user_data = connected_users[request.sid]
+    room = user_data['room']
+    username = user_data['username']
+    
+    if message_id is None:
+        return
+    
+    # Encontrar e remover a mensagem
+    if room in rooms and message_id < len(rooms[room]):
+        message = rooms[room][message_id]
+        if message.get('username') == username:
+            # Marcar como deletada ao invés de remover completamente
+            message['message'] = '[Mensagem deletada]'
+            message['deleted'] = True
+            message['deleted_at'] = datetime.now().isoformat()
+            
+            emit('message_deleted', {
+                'message_id': message_id,
+                'deleted': True
+            }, room=room)
+            print(f'{username} deletou mensagem {message_id}')
+
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True)
+

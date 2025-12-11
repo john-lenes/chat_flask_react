@@ -1568,3 +1568,209 @@ body.dark-mode {
 .online-users:hover {
     opacity: 0.8;
 }
+
+/* Message Edit Container */
+.message-edit-container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 5px;
+}
+
+.edit-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 2px solid #667eea;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+}
+
+.dark-mode .edit-input {
+    background: #1e293b;
+    border-color: #667eea;
+    color: #f1f5f9;
+}
+
+.edit-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.btn-save, .btn-cancel {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+}
+
+.btn-save {
+    background: #10b981;
+    color: white;
+}
+
+.btn-save:hover {
+    background: #059669;
+    transform: scale(1.05);
+}
+
+.btn-cancel {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-cancel:hover {
+    background: #dc2626;
+    transform: scale(1.05);
+}
+
+/* Message Actions */
+.message-actions {
+    display: flex;
+    gap: 5px;
+    margin-top: 5px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.message:hover .message-actions {
+    opacity: 1;
+}
+
+.action-btn {
+    background: transparent;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.edit-btn:hover {
+    background: rgba(59, 130, 246, 0.2);
+}
+
+.delete-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+.edited-badge {
+    font-size: 11px;
+    color: #64748b;
+    font-style: italic;
+    margin-left: 5px;
+}
+
+/* Scroll to Bottom Button */
+.scroll-to-bottom {
+    position: absolute;
+    bottom: 80px;
+    right: 20px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    transition: all 0.3s;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.scroll-to-bottom:hover {
+    background: #5568d3;
+    transform: scale(1.1);
+}
+
+.scroll-to-bottom:active {
+    transform: scale(0.95);
+}
+
+/* Mention Suggestions */
+.mention-suggestions {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px 8px 0 0;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.dark-mode .mention-suggestions {
+    background: #1e293b;
+    border-color: #475569;
+}
+
+.mention-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.dark-mode .mention-item {
+    border-color: #334155;
+}
+
+.mention-item:hover {
+    background: #f5f5f5;
+}
+
+.dark-mode .mention-item:hover {
+    background: #334155;
+}
+
+.mention-item:last-child {
+    border-bottom: none;
+}
+
+/* Sending Animation */
+.send-button.sending {
+    opacity: 0.6;
+    cursor: not-allowed;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 0.6;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
+
+/* Textarea Auto-resize */
+.message-input {
+    min-height: 44px;
+    max-height: 120px;
+    resize: none;
+    overflow-y: auto;
+    line-height: 1.4;
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+/* Timestamp Hover Effect */
+.message-time {
+    cursor: help;
+    position: relative;
+}
+
+.message-time:hover {
+    text-decoration: underline;
+}

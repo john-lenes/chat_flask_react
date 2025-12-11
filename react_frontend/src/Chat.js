@@ -48,13 +48,27 @@ const Chat = () => {
     const [reactions, setReactions] = useState({});
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
     const [connectionStatus, setConnectionStatus] = useState('connecting'); // 'connecting', 'connected', 'disconnected'
+    const [editingMessageId, setEditingMessageId] = useState(null);
+    const [editingText, setEditingText] = useState('');
+    const [isSending, setIsSending] = useState(false);
+    const [showScrollButton, setShowScrollButton] = useState(false);
+    const [mentionSuggestions, setMentionSuggestions] = useState([]);
+    const [showMentions, setShowMentions] = useState(false);
     const messagesEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
     const audioRef = useRef(null);
     const fileInputRef = useRef(null);
+    const messageInputRef = useRef(null);
+    const messagesContainerRef = useRef(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    const handleScroll = (e) => {
+        const element = e.target;
+        const isNearBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 100;
+        setShowScrollButton(!isNearBottom);
     };
 
     useEffect(() => {
@@ -76,6 +90,18 @@ const Chat = () => {
             document.body.classList.remove('dark-mode');
         }
     }, [darkMode]);
+
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+            if (joined && messages.length > 0) {
+                e.preventDefault();
+                e.returnValue = 'Você tem certeza que deseja sair do chat?';
+                return e.returnValue;
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [joined, messages]);
 
     const playNotificationSound = () => {
         if (soundEnabled && audioRef.current) {
@@ -313,6 +339,38 @@ const Chat = () => {
             }));
         });
 
+        // Mensagem editada
+        socket.on('message_edited', (data) => {
+            setMessages((prev) => {
+                const updated = prev.map((msg, idx) => 
+                    idx === data.message_id 
+                        ? { ...msg, message: data.new_text, edited: data.edited } 
+                        : msg
+                );
+                setRoomMessages(cache => ({
+                    ...cache,
+                    [currentRoom]: updated
+                }));
+                return updated;
+            });
+        });
+
+        // Mensagem deletada
+        socket.on('message_deleted', (data) => {
+            setMessages((prev) => {
+                const updated = prev.map((msg, idx) => 
+                    idx === data.message_id 
+                        ? { ...msg, message: '[Mensagem deletada]', deleted: data.deleted } 
+                        : msg
+                );
+                setRoomMessages(cache => ({
+                    ...cache,
+                    [currentRoom]: updated
+                }));
+                return updated;
+            });
+        });
+
         return () => {
             socket.off('message_history');
             socket.off('message');
@@ -326,8 +384,10 @@ const Chat = () => {
             socket.off('private_message');
             socket.off('users_list');
             socket.off('reaction_updated');
+            socket.off('message_edited');
+            socket.off('message_deleted');
         };
-    }, [username, soundEnabled, notificationsEnabled]);
+    }, [username, soundEnabled, notificationsEnabled, currentRoom]);
 
     const handleJoin = (e) => {
         e.preventDefault();
@@ -352,13 +412,50 @@ const Chat = () => {
 
     const sendMessage = (e) => {
         e.preventDefault();
-        if (message.trim()) {
+        if (message.trim() && !isSending) {
             console.log('Enviando mensagem:', message.trim());
+            setIsSending(true);
             socket.emit('message', { message: message.trim() });
             socket.emit('typing', { is_typing: false });
             setMessage('');
             setShowEmojiPicker(false);
+            setTimeout(() => setIsSending(false), 500);
         }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage(e);
+        }
+        // Shift + Enter will naturally create a new line in textarea
+    };
+
+    const handleInputChange = (e) => {
+        const value = e.target.value;
+        setMessage(value);
+        handleTyping();
+
+        // Check for @ mentions
+        const lastWord = value.split(/\s/).pop();
+        if (lastWord.startsWith('@') && lastWord.length > 1) {
+            const searchTerm = lastWord.substring(1).toLowerCase();
+            const suggestions = onlineUsers.filter(user => 
+                user.toLowerCase().startsWith(searchTerm) && user !== username
+            );
+            setMentionSuggestions(suggestions);
+            setShowMentions(suggestions.length > 0);
+        } else {
+            setShowMentions(false);
+        }
+    };
+
+    const insertMention = (user) => {
+        const words = message.split(/\s/);
+        words[words.length - 1] = `@${user} `;
+        setMessage(words.join(' '));
+        setShowMentions(false);
+        messageInputRef.current?.focus();
     };
 
     const addEmoji = (emoji) => {
@@ -421,6 +518,32 @@ const Chat = () => {
         const msg = prompt(`Enviar mensagem privada para ${targetUser}:`);
         if (msg && msg.trim()) {
             socket.emit('message', { message: `/dm @${targetUser} ${msg.trim()}` });
+        }
+    };
+
+    const startEditMessage = (msg) => {
+        if (msg.username === username && msg.type !== 'system' && msg.type !== 'command') {
+            setEditingMessageId(msg.id);
+            setEditingText(msg.message);
+        }
+    };
+
+    const saveEditMessage = (messageId) => {
+        if (editingText.trim()) {
+            socket.emit('edit_message', { message_id: messageId, new_text: editingText.trim() });
+            setEditingMessageId(null);
+            setEditingText('');
+        }
+    };
+
+    const cancelEdit = () => {
+        setEditingMessageId(null);
+        setEditingText('');
+    };
+
+    const deleteMessage = (messageId) => {
+        if (window.confirm('Deseja deletar esta mensagem?')) {
+            socket.emit('delete_message', { message_id: messageId });
         }
     };
 
@@ -588,7 +711,7 @@ const Chat = () => {
                 </div>
 
                 <div className="messages-area">
-                    <div className="messages-container">
+                    <div className="messages-container" ref={messagesContainerRef} onScroll={handleScroll}>
                         {messages.map((msg, index) => {
                             if (msg.type === 'system') {
                                 return (
@@ -665,9 +788,54 @@ const Chat = () => {
                                             <span className="message-username" style={{color: msg.color}}>
                                                 {msg.username}
                                             </span>
-                                            <span className="message-time">{formatTime(msg.timestamp)}</span>
+                                            <span className="message-time" title={new Date(msg.timestamp).toLocaleString('pt-BR')}>
+                                                {formatTime(msg.timestamp)}
+                                            </span>
                                         </div>
-                                        <div className="message-text">{msg.message}</div>
+                                        {editingMessageId === msg.id ? (
+                                            <div className="message-edit-container">
+                                                <input
+                                                    type="text"
+                                                    value={editingText}
+                                                    onChange={(e) => setEditingText(e.target.value)}
+                                                    className="edit-input"
+                                                    autoFocus
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') saveEditMessage(msg.id);
+                                                        if (e.key === 'Escape') cancelEdit();
+                                                    }}
+                                                />
+                                                <div className="edit-buttons">
+                                                    <button onClick={() => saveEditMessage(msg.id)} className="btn-save">✓</button>
+                                                    <button onClick={cancelEdit} className="btn-cancel">✗</button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <div className="message-text">{msg.message}</div>
+                                                {msg.edited && <span className="edited-badge"> (editado)</span>}
+                                            </>
+                                        )}
+                                        <div className="message-actions">
+                                            {msg.username === username && editingMessageId !== msg.id && msg.type !== 'system' && (
+                                                <>
+                                                    <button 
+                                                        className="action-btn edit-btn" 
+                                                        onClick={() => startEditMessage(msg)}
+                                                        title="Editar mensagem"
+                                                    >
+                                                        ✏️
+                                                    </button>
+                                                    <button 
+                                                        className="action-btn delete-btn" 
+                                                        onClick={() => deleteMessage(msg.id)}
+                                                        title="Deletar mensagem"
+                                                    >
+                                                        🗑️
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
                                         <div className="message-reactions">
                                             {reactions[msg.id] && Object.entries(reactions[msg.id]).map(([emoji, users]) => (
                                                 <button
@@ -708,6 +876,12 @@ const Chat = () => {
                         <div ref={messagesEndRef} />
                     </div>
 
+                    {showScrollButton && (
+                        <button className="scroll-to-bottom" onClick={scrollToBottom} title="Rolar para baixo">
+                            ⬇️
+                        </button>
+                    )}
+
                     <form onSubmit={sendMessage} className="message-form">
                         <input 
                             type="file" 
@@ -740,19 +914,35 @@ const Chat = () => {
                                 ))}
                             </div>
                         )}
-                        <input
-                            type="text"
+                        {showMentions && (
+                            <div className="mention-suggestions">
+                                {mentionSuggestions.map(user => (
+                                    <div 
+                                        key={user} 
+                                        className="mention-item"
+                                        onClick={() => insertMention(user)}
+                                    >
+                                        @{user}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        <textarea
+                            ref={messageInputRef}
                             value={message}
-                            onChange={(e) => {
-                                setMessage(e.target.value);
-                                handleTyping();
-                            }}
-                            placeholder="Digite sua mensagem... (use / para comandos)"
+                            onChange={handleInputChange}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Digite sua mensagem... (Enter para enviar, Shift+Enter para nova linha)"
                             className="message-input"
                             autoComplete="off"
+                            rows={1}
                         />
-                        <button type="submit" className="send-button">
-                            📨 Enviar
+                        <button 
+                            type="submit" 
+                            className={`send-button ${isSending ? 'sending' : ''}`}
+                            disabled={isSending}
+                        >
+                            {isSending ? '⏳' : '📨'} Enviar
                         </button>
                     </form>
                 </div>
