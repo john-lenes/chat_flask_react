@@ -84,22 +84,39 @@ const Chat = () => {
     };
 
     const requestNotificationPermission = () => {
-        if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission().then(permission => {
-                setNotificationsEnabled(permission === 'granted');
-            });
-        } else if (Notification.permission === 'granted') {
-            setNotificationsEnabled(true);
+        if (typeof window !== 'undefined' && 'Notification' in window) {
+            try {
+                if (Notification.permission === 'default') {
+                    Notification.requestPermission().then(permission => {
+                        setNotificationsEnabled(permission === 'granted');
+                    }).catch(err => {
+                        console.log('Notificações não suportadas:', err);
+                        setNotificationsEnabled(false);
+                    });
+                } else if (Notification.permission === 'granted') {
+                    setNotificationsEnabled(true);
+                }
+            } catch (error) {
+                console.log('Erro ao solicitar permissão de notificação:', error);
+                setNotificationsEnabled(false);
+            }
+        } else {
+            console.log('API de Notificações não disponível neste navegador');
+            setNotificationsEnabled(false);
         }
     };
 
     const showNotification = (title, body) => {
-        if (notificationsEnabled && document.hidden) {
-            new Notification(title, {
-                body: body,
-                icon: '💬',
-                tag: 'chat-notification'
-            });
+        if (typeof window !== 'undefined' && 'Notification' in window && notificationsEnabled && document.hidden) {
+            try {
+                new Notification(title, {
+                    body: body,
+                    icon: '💬',
+                    tag: 'chat-notification'
+                });
+            } catch (error) {
+                console.log('Erro ao mostrar notificação:', error);
+            }
         }
     };
 
