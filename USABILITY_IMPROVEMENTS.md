@@ -59,6 +59,106 @@ Este documento descreve as melhorias de usabilidade implementadas no chat Flask 
 - Previne perda acidental de conversas ativas
 - Só aparece se você está conectado e há mensagens
 
+### 9. 📏 Auto-Resize do Textarea
+- Textarea cresce automaticamente conforme você digita
+- Altura máxima de 120px, depois adiciona scroll
+- Altura mínima de 1 linha
+- Ajuste fluido e responsivo
+
+### 10. 📋 Copiar Mensagem
+- Botão de copiar aparece em cada mensagem
+- Clique para copiar o texto para área de transferência
+- Feedback visual ao copiar com sucesso
+- Útil para compartilhar trechos de conversa
+
+### 11. 🎯 Destacar @Menções
+- Mensagens que mencionam você ficam destacadas
+- Borda amarela à esquerda
+- Background amarelo sutil
+- Ícone de mão acenando (👋) como indicador visual
+- Funciona com modo claro e escuro
+
+### 12. 📎 Drag & Drop de Arquivos
+- Arraste arquivos diretamente para a área do chat
+- Overlay visual mostrando onde soltar
+- Suporte para imagens, PDFs, documentos
+- Limite de 5MB por arquivo
+- Pré-visualização de imagens enviadas
+- Link de download para documentos
+
+### 13. 💬 Responder Mensagens (Threads)
+- Botão de resposta em cada mensagem
+- Preview da mensagem sendo respondida
+- Visual de thread com barra lateral colorida
+- Cancele a resposta clicando no X
+- Facilita acompanhar conversas complexas
+
+### 14. 🔍 Busca no Histórico
+- Botão de busca no header
+- Campo de pesquisa com destaque
+- Resultados em tempo real
+- Contagem de resultados encontrados
+- Destaque visual das mensagens encontradas
+- Botão limpar para fechar a busca
+
+---
+
+## 🎨 TOP 6 - Features Premium
+
+### 15. ✨ Formatação de Texto
+- **Negrito**: `**texto**` ou use botão **B**
+- **Itálico**: `*texto*` ou use botão _I_
+- **Tachado**: `~~texto~~` ou use botão ~~S~~
+- **Código**: `` `código` `` ou use botão `<>`
+- Toolbar de formatação (botão 🎨)
+- Renderização em tempo real com HTML
+- Suporte a markdown simplificado
+- Sanitização de HTML para segurança
+
+### 16. 🎨 6 Temas Visuais
+- **Default**: Azul clássico (#2563eb)
+- **Ocean**: Verde-azulado (#06b6d4)
+- **Forest**: Verde natureza (#10b981)
+- **Sunset**: Laranja quente (#f97316)
+- **Purple**: Roxo moderno (#8b5cf6)
+- **AMOLED**: Preto puro (#000000)
+- Seletor visual no painel de configurações
+- Persistência em localStorage
+- Aplicação automática no body
+- CSS variables dinâmicas
+
+### 17. 🔔 Contador de Não Lidas
+- Badge com número de mensagens não lidas por sala
+- Atualização em tempo real
+- Animação de pulso para chamar atenção
+- Zera automaticamente ao entrar na sala
+- Visual destacado (vermelho)
+- Funciona em background
+
+### 18. 📌 Fixar Mensagens
+- Botão para fixar/desafixar mensagens (📍/📌)
+- Banner de mensagens fixadas no topo
+- Lista compacta de todas as fixadas
+- Clique para desafixar individualmente
+- Persistência local (localStorage)
+- Limite razoável de espaço visual
+
+### 19. ⚡ Reações Rápidas
+- Menu de 6 reações ao passar mouse: ❤️ 👍 😂 😮 😢 😡
+- Aparece sobre cada mensagem no hover
+- Clique rápido para reagir
+- Complementa o menu completo de emojis
+- Animação suave de hover
+- Destaque de escala ao passar mouse
+
+### 20. 🔗 Preview de Links
+- Detecção automática de URLs (http/https)
+- Card visual para cada link encontrado
+- Ícone 🔗 + URL encurtada
+- Link clicável em nova aba
+- Hover com animação sutil
+- Suporte a múltiplos links por mensagem
+
 ---
 
 ## 🎨 Melhorias de Interface
@@ -86,10 +186,17 @@ Este documento descreve as melhorias de usabilidade implementadas no chat Flask 
 ## 🔧 Implementação Técnica
 
 ### Frontend (React)
-- **Novos estados**: `editingMessageId`, `editingText`, `isSending`, `showScrollButton`, `mentionSuggestions`, `showMentions`
-- **Novos refs**: `messageInputRef`, `messagesContainerRef`
-- **Novos handlers**: `handleKeyDown`, `handleInputChange`, `insertMention`, `startEditMessage`, `saveEditMessage`, `cancelEdit`, `deleteMessage`, `handleScroll`
-- **Novos listeners**: `message_edited`, `message_deleted`
+- **Estados básicos**: `editingMessageId`, `editingText`, `isSending`, `showScrollButton`, `mentionSuggestions`, `showMentions`
+- **Estados drag & drop**: `isDragging`, `replyTo`, `searchQuery`, `searchResults`, `showSearch`
+- **Estados TOP 6**: `theme`, `unreadCounts`, `pinnedMessages`, `showPinned`, `showFormatToolbar`
+- **Novos refs**: `messageInputRef`, `messagesContainerRef`, `dropZoneRef`, `fileInputRef`
+- **Handlers básicos**: `handleKeyDown`, `handleInputChange`, `insertMention`, `startEditMessage`, `saveEditMessage`, `cancelEdit`, `deleteMessage`, `handleScroll`, `copyMessage`
+- **Handlers drag & drop**: `handleDragEnter`, `handleDragLeave`, `handleDragOver`, `handleDrop`, `handleFileUpload`
+- **Handlers threads**: `startReply`, `cancelReply`
+- **Handlers busca**: `handleSearch`, `clearSearch`, `scrollToMessage`
+- **Handlers TOP 6**: `formatText`, `insertFormatting`, `changeTheme`, `markRoomAsRead`, `togglePin`, `quickReaction`, `detectLinks`, `renderMessageWithLinks`
+- **Novos listeners Socket.IO**: `message_edited`, `message_deleted`
+- **Objetos de configuração**: `THEMES` (6 temas com cores), `REACTION_EMOJIS`, `EMOJI_LIST`
 
 ### Backend (Flask)
 - **Novos endpoints Socket.IO**: `edit_message`, `delete_message`
@@ -227,5 +334,6 @@ Este documento descreve as melhorias de usabilidade implementadas no chat Flask 
 ---
 
 **Implementado em**: Dezembro 2025  
-**Versão**: 2.0.0  
-**Status**: ✅ Pronto para produção
+**Versão**: 3.0.0 (TOP 6 Premium Features)  
+**Status**: ✅ Pronto para produção  
+**Total de Features**: 20 melhorias implementadas
