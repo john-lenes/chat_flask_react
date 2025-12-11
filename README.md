@@ -20,7 +20,7 @@ Sistema de chat em tempo real com Flask (backend) e React (frontend), utilizando
 - ✅ **Notificações Desktop**: Receba alertas quando alguém mencionar você
 - ✅ **Modo Escuro**: Interface adaptável com paleta Slate
 
-### 🆕 Melhorias de Usabilidade (v2.0)
+### 🆕 Melhorias de Usabilidade (v3.0)
 - ✅ **Enter para Enviar**: Pressione Enter para enviar, Shift+Enter para nova linha
 - ✅ **Edição de Mensagens**: Edite suas próprias mensagens (botão ✏️ no hover)
 - ✅ **Exclusão de Mensagens**: Delete suas mensagens (botão 🗑️ no hover)
@@ -29,6 +29,22 @@ Sistema de chat em tempo real com Flask (backend) e React (frontend), utilizando
 - ✅ **Scroll Inteligente**: Botão para voltar às mensagens recentes
 - ✅ **Feedback Visual**: Indicador de envio de mensagem
 - ✅ **Confirmação ao Sair**: Previne perda acidental de conversas
+- ✅ **Auto-Resize Textarea**: Campo de mensagem cresce automaticamente
+- ✅ **Copiar Mensagem**: Copie texto de qualquer mensagem com um clique
+- ✅ **Destacar @Menções**: Mensagens que mencionam você ficam destacadas
+
+### 🚀 Recursos Avançados (v3.0)
+- ✅ **Drag & Drop de Arquivos**: Arraste arquivos para a área do chat
+- ✅ **Responder Mensagens (Threads)**: Crie threads respondendo mensagens específicas
+- ✅ **Buscar no Histórico**: Pesquise mensagens anteriores com destaque visual
+
+### 🎨 TOP 6 - Features Premium (v3.0)
+- ✅ **Formatação de Texto**: Negrito, itálico, tachado, código inline com markdown
+- ✅ **6 Temas Visuais**: Default, Ocean, Forest, Sunset, Purple, AMOLED
+- ✅ **Contador de Não Lidas**: Badge com número de mensagens não lidas por sala
+- ✅ **Fixar Mensagens**: Fixe mensagens importantes no topo do chat
+- ✅ **Reações Rápidas**: Menu de 6 reações ao passar mouse sobre mensagens
+- ✅ **Preview de Links**: Detecção automática e preview de URLs compartilhadas
 
 ### Comandos Disponíveis
 
@@ -253,12 +269,13 @@ MAX_FILE_SIZE = 5 * 1024 * 1024  # Altere para o tamanho desejado
 - [ ] Sistema de autenticação (login/senha)
 - [ ] Persistência de mensagens (banco de dados)
 - [ ] Chamadas de voz/vídeo
-- [ ] Menções com @ e autocomplete
 - [ ] Sistema de administração de salas
 - [ ] Banir/silenciar usuários
-- [ ] Temas customizáveis
 - [ ] Exportar histórico de chat
 - [ ] Criptografia end-to-end
+- [ ] Emojis personalizados
+- [ ] Temas customizáveis pelo usuário
+- [ ] Suporte a GIFs e Stickers
 
 ## 📄 Licença
 
@@ -270,6 +287,7 @@ Desenvolvido como projeto de chat em tempo real com Flask e React.
 
 ---
 
-**Versão**: 1.0.0  
+**Versão**: 3.0.0  
 **Data**: Dezembro 2025  
-**Stack**: Flask 3.0 + React 18 + Socket.IO
+**Stack**: Flask 3.0 + React 18 + Socket.IO  
+**Total de Features**: 20 melhorias de usabilidade implementadas
