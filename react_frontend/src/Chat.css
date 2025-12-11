@@ -2,11 +2,13 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
 }
 
 html {
     height: 100%;
     height: -webkit-fill-available;
+    touch-action: manipulation;
 }
 
 body {
@@ -19,6 +21,7 @@ body {
     overflow: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    -webkit-text-size-adjust: 100%;
 }
 
 body.dark-mode {
@@ -967,27 +970,42 @@ body.dark-mode {
     .message-form {
         padding: 12px 10px;
         gap: 8px;
+        position: sticky;
+        bottom: 0;
+        background: white;
+        z-index: 100;
+    }
+
+    .dark-mode .message-form {
+        background: #334155;
     }
 
     .message-input {
         padding: 12px 15px;
         font-size: 14px;
+        border-radius: 20px;
     }
 
     .send-button {
         padding: 12px 20px;
         font-size: 14px;
+        min-height: 44px;
+        border-radius: 20px;
     }
 
     .file-btn {
-        width: 35px;
-        height: 35px;
+        width: 40px;
+        height: 40px;
         font-size: 16px;
+        min-width: 40px;
+        min-height: 40px;
     }
 
     .emoji-btn {
         font-size: 20px;
         padding: 8px;
+        min-width: 40px;
+        min-height: 40px;
     }
 
     .emoji-picker {
@@ -1073,26 +1091,244 @@ body.dark-mode {
 
 /* Para telas muito pequenas (smartphones pequenos) */
 @media (max-width: 380px) {
+    .chat-header {
+        padding: 12px 15px;
+    }
+
     .chat-header h1 {
-        font-size: 16px;
+        font-size: 15px;
+    }
+
+    .user-info {
+        font-size: 11px;
+        flex-wrap: wrap;
     }
 
     .room-badge {
+        display: inline-block;
+        margin-left: 0;
+        margin-top: 4px;
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+
+    .connection-status {
         display: block;
         margin-left: 0;
-        margin-top: 5px;
+        margin-top: 4px;
+        font-size: 10px;
+    }
+
+    .header-actions {
+        gap: 6px;
+    }
+
+    .online-users {
+        font-size: 11px;
+        padding: 5px 8px;
+    }
+
+    .settings-btn {
+        font-size: 14px;
+        padding: 5px 8px;
+    }
+
+    .rooms-sidebar {
+        max-height: 100px;
+        min-height: 100px;
+        padding: 8px;
+    }
+
+    .rooms-sidebar h3 {
+        font-size: 12px;
+        margin-bottom: 6px;
+    }
+
+    .room-item {
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    .create-room-btn {
+        font-size: 11px;
+        padding: 6px;
+    }
+
+    .messages-container {
+        padding: 10px 8px;
+    }
+
+    .message {
+        max-width: 92%;
+        padding: 8px 10px;
+    }
+
+    .message-username {
+        font-size: 12px;
+    }
+
+    .message-text {
+        font-size: 13px;
+    }
+
+    .message-time {
+        font-size: 9px;
+    }
+
+    .message-form {
+        padding: 10px 8px;
+        gap: 6px;
+    }
+
+    .message-input {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+
+    .send-button {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    .file-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+
+    .emoji-btn {
+        font-size: 18px;
+        padding: 6px;
     }
 
     .emoji-picker {
         grid-template-columns: repeat(5, 1fr);
+        padding: 10px;
+        gap: 6px;
+    }
+
+    .emoji-picker span {
+        font-size: 20px;
+        padding: 4px;
+    }
+
+    .join-box {
+        min-width: 95%;
+        padding: 25px 15px;
+        margin: 10px;
+    }
+
+    .join-box h2 {
+        font-size: 22px;
+    }
+
+    .join-box p {
+        font-size: 13px;
+    }
+
+    .username-input {
+        padding: 12px 15px;
+        font-size: 15px;
+    }
+
+    .join-button {
+        padding: 12px;
+        font-size: 15px;
+    }
+
+    .room-selector label {
+        font-size: 13px;
+    }
+
+    .room-selector select {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    .users-modal-content {
+        padding: 15px;
+        max-width: 95%;
+    }
+
+    .users-modal-content h3 {
+        font-size: 16px;
+    }
+
+    .user-item {
+        padding: 8px;
+        gap: 10px;
+    }
+
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+
+    .user-name {
+        font-size: 13px;
+    }
+
+    .dm-btn-small {
+        font-size: 12px;
+        padding: 5px 8px;
+    }
+
+    .settings-panel {
+        padding: 10px 12px;
+    }
+
+    .setting-item label {
+        font-size: 12px;
+    }
+
+    .reaction {
+        padding: 3px 8px;
+        font-size: 12px;
+    }
+
+    .add-reaction-btn {
+        padding: 3px 8px;
+        font-size: 12px;
+    }
+}
+
+/* Para telas extra pequenas */
+@media (max-width: 320px) {
+    .chat-header h1 {
+        font-size: 14px;
+    }
+
+    .user-info {
+        font-size: 10px;
+    }
+
+    .online-users {
+        font-size: 10px;
+        padding: 4px 6px;
     }
 
     .message {
-        max-width: 90%;
+        max-width: 95%;
+        font-size: 12px;
+    }
+
+    .message-input {
+        padding: 8px 10px;
+        font-size: 13px;
     }
 
     .send-button {
-        padding: 12px 15px;
+        padding: 8px 10px;
+        font-size: 12px;
+    }
+
+    .emoji-picker {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .join-box h2 {
+        font-size: 20px;
     }
 }
 
