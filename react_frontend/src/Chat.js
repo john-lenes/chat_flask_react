@@ -3,7 +3,28 @@ import io from 'socket.io-client';
 import './Chat.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
-const socket = io(BACKEND_URL);
+console.log('🔌 Conectando ao backend:', BACKEND_URL);
+
+const socket = io(BACKEND_URL, {
+    transports: ['websocket', 'polling'],
+    reconnection: true,
+    reconnectionDelay: 1000,
+    reconnectionAttempts: 10,
+    timeout: 20000
+});
+
+// Logs de conexão
+socket.on('connect', () => {
+    console.log('✅ Conectado ao servidor Socket.IO');
+});
+
+socket.on('connect_error', (error) => {
+    console.error('❌ Erro de conexão:', error.message);
+});
+
+socket.on('disconnect', (reason) => {
+    console.log('🔌 Desconectado:', reason);
+});
 
 const EMOJI_LIST = ['😀', '😂', '❤️', '👍', '🎉', '🔥', '⭐', '💯', '🚀', '👏', '🤔', '😎', '🥳', '💪', '🙌'];
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '🎉', '😮', '😢'];
@@ -26,6 +47,7 @@ const Chat = () => {
     const [showUsersList, setShowUsersList] = useState(false);
     const [reactions, setReactions] = useState({});
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+    const [connectionStatus, setConnectionStatus] = useState('connecting'); // 'connecting', 'connected', 'disconnected'
     const messagesEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
     const audioRef = useRef(null);
@@ -83,6 +105,37 @@ const Chat = () => {
 
     useEffect(() => {
         requestNotificationPermission();
+
+        // Monitorar status de conexão
+        const handleConnect = () => {
+            console.log('✅ Socket conectado');
+            setConnectionStatus('connected');
+        };
+
+        const handleDisconnect = () => {
+            console.log('⚠️ Socket desconectado');
+            setConnectionStatus('disconnected');
+        };
+
+        const handleConnectError = (error) => {
+            console.error('❌ Erro de conexão:', error);
+            setConnectionStatus('disconnected');
+        };
+
+        socket.on('connect', handleConnect);
+        socket.on('disconnect', handleDisconnect);
+        socket.on('connect_error', handleConnectError);
+
+        // Verificar status inicial
+        if (socket.connected) {
+            setConnectionStatus('connected');
+        }
+
+        return () => {
+            socket.off('connect', handleConnect);
+            socket.off('disconnect', handleDisconnect);
+            socket.off('connect_error', handleConnectError);
+        };
     }, []);
 
     useEffect(() => {
@@ -402,11 +455,16 @@ const Chat = () => {
                     <p className="user-info">
                         Conectado como: <strong>{username}</strong>
                         <span className="room-badge">#{currentRoom}</span>
+                        {connectionStatus !== 'connected' && (
+                            <span className={`connection-status status-${connectionStatus}`}>
+                                {connectionStatus === 'connecting' ? '🔄 Conectando...' : '⚠️ Desconectado'}
+                            </span>
+                        )}
                     </p>
                 </div>
                 <div className="header-actions">
                     <div className="online-users" onClick={() => setShowUsersList(!showUsersList)}>
-                        <span className="online-dot"></span>
+                        <span className={`online-dot ${connectionStatus === 'connected' ? 'connected' : ''}`}></span>
                         {onlineUsers.length} online
                     </div>
                     <button className="settings-btn" onClick={() => setShowSettings(!showSettings)}>

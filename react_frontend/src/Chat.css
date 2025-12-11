@@ -602,9 +602,32 @@ body.dark-mode {
 .online-dot {
     width: 8px;
     height: 8px;
-    background: #4ade80;
+    background: #ef4444;
     border-radius: 50%;
     animation: pulse 2s infinite;
+}
+
+.online-dot.connected {
+    background: #4ade80;
+}
+
+.connection-status {
+    display: inline-block;
+    margin-left: 12px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.connection-status.status-connecting {
+    background: rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+}
+
+.connection-status.status-disconnected {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
 }
 
 @keyframes pulse {
