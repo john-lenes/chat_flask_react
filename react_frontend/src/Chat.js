@@ -65,6 +65,7 @@ const Chat = () => {
     const [showPinned, setShowPinned] = useState(false);
     const [showFormatToolbar, setShowFormatToolbar] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [activeMessageMenu, setActiveMessageMenu] = useState(null); // ID da mensagem com menu ativo
     const messagesEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
     const audioRef = useRef(null);
@@ -72,6 +73,9 @@ const Chat = () => {
     const messageInputRef = useRef(null);
     const messagesContainerRef = useRef(null);
     const dropZoneRef = useRef(null);
+    const settingsPanelRef = useRef(null);
+    const usersListPanelRef = useRef(null);
+    const emojiPickerRef = useRef(null);
 
     const THEMES = {
         default: { name: 'Padrão', primary: '#667eea', secondary: '#764ba2' },
@@ -681,6 +685,67 @@ const Chat = () => {
         changeTheme(theme);
     }, []);
 
+    // Detectar clique fora dos painéis para fechar
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            // Fechar menu de ações de mensagem ao clicar fora
+            if (activeMessageMenu !== null) {
+                const clickedMessage = event.target.closest('.message');
+                if (!clickedMessage || clickedMessage.dataset.messageId !== String(activeMessageMenu)) {
+                    setActiveMessageMenu(null);
+                }
+            }
+
+            // Fechar painel de configurações
+            if (settingsPanelRef.current && !settingsPanelRef.current.contains(event.target)) {
+                const settingsBtn = event.target.closest('.settings-btn');
+                if (!settingsBtn && showSettings) {
+                    setShowSettings(false);
+                }
+            }
+
+            // Fechar lista de usuários
+            if (usersListPanelRef.current && !usersListPanelRef.current.contains(event.target)) {
+                const onlineUsersBtn = event.target.closest('.online-users');
+                if (!onlineUsersBtn && showUsersList) {
+                    setShowUsersList(false);
+                }
+            }
+
+            // Fechar emoji picker
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+                const emojiBtn = event.target.closest('.emoji-btn');
+                if (!emojiBtn && showEmojiPicker) {
+                    setShowEmojiPicker(false);
+                }
+            }
+        };
+
+        const handleEscapeKey = (event) => {
+            if (event.key === 'Escape') {
+                setShowSettings(false);
+                setShowUsersList(false);
+                setShowEmojiPicker(false);
+                setShowSearch(false);
+                setShowPinned(false);
+                setActiveMessageMenu(null);
+                setMobileMenuOpen(false);
+            }
+        };
+
+        // Adicionar listener apenas se algum painel estiver aberto
+        if (showSettings || showUsersList || showEmojiPicker || activeMessageMenu !== null) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+        
+        document.addEventListener('keydown', handleEscapeKey);
+        
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleEscapeKey);
+        };
+    }, [showSettings, showUsersList, showEmojiPicker, activeMessageMenu]);
+
     // Unread counter
     const markRoomAsRead = (room) => {
         setUnreadCounts(prev => ({ ...prev, [room]: 0 }));
@@ -933,7 +998,7 @@ const Chat = () => {
 
             {showUsersList && (
                 <div className="users-modal" onClick={() => setShowUsersList(false)}>
-                    <div className="users-modal-content" onClick={(e) => e.stopPropagation()}>
+                    <div className="users-modal-content" ref={usersListPanelRef} onClick={(e) => e.stopPropagation()}>
                         <h3>Usuários Online ({onlineUsers.length})</h3>
                         <div className="users-list">
                             {onlineUsers.map((user, idx) => (
@@ -964,7 +1029,7 @@ const Chat = () => {
             )}
 
             {showSettings && (
-                <div className="settings-panel">
+                <div className="settings-panel" ref={settingsPanelRef}>
                     <div className="setting-item">
                         <label>
                             <input
@@ -1151,7 +1216,11 @@ const Chat = () => {
                                 );
                             }
                             return (
-                                <div key={msg.id || index} className={`message ${msg.username === username ? 'own-message' : ''} ${isMentioned(msg.message) ? 'mentioned' : ''}`}>
+                                <div 
+                                    key={msg.id || index} 
+                                    className={`message ${msg.username === username ? 'own-message' : ''} ${isMentioned(msg.message) ? 'mentioned' : ''} ${activeMessageMenu === msg.id ? 'menu-active' : ''}`}
+                                    onClick={() => setActiveMessageMenu(activeMessageMenu === msg.id ? null : msg.id)}
+                                >
                                     <div className="message-avatar" style={{backgroundColor: msg.color}}>
                                         {msg.username.charAt(0).toUpperCase()}
                                     </div>
@@ -1352,7 +1421,7 @@ const Chat = () => {
                             😀
                         </button>
                         {showEmojiPicker && (
-                            <div className="emoji-picker">
+                            <div className="emoji-picker" ref={emojiPickerRef}>
                                 {EMOJI_LIST.map(emoji => (
                                     <span key={emoji} onClick={() => addEmoji(emoji)}>
                                         {emoji}

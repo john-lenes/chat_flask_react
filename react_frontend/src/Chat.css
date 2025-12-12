@@ -760,7 +760,8 @@ body.theme-amoled { --background: #000000; --surface: #0a0a0a; --border: #1a1a1a
     transition: opacity 0.2s;
 }
 
-.message:hover .message-actions {
+.message:hover .message-actions,
+.message.menu-active .message-actions {
     opacity: 1;
 }
 
