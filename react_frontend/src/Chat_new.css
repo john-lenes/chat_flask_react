@@ -1289,7 +1289,7 @@ body.theme-amoled { --background: #000000; --surface: #0a0a0a; --border: #1a1a1a
     
     /* Botão toggle sidebar mobile */
     .mobile-menu-toggle {
-        display: block !important;
+        display: block;
         position: fixed;
         bottom: 90px;
         left: 16px;

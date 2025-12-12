@@ -64,6 +64,7 @@ const Chat = () => {
     const [pinnedMessages, setPinnedMessages] = useState([]);
     const [showPinned, setShowPinned] = useState(false);
     const [showFormatToolbar, setShowFormatToolbar] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const messagesEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
     const audioRef = useRef(null);
@@ -1034,14 +1035,17 @@ const Chat = () => {
             )}
 
             <div className="chat-layout">
-                <div className="rooms-sidebar">
+                <div className={`rooms-sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
                     <h3>Salas</h3>
                     <div className="rooms-list">
                         {availableRooms.map(room => (
                             <div
                                 key={room}
                                 className={`room-item ${room === currentRoom ? 'active' : ''}`}
-                                onClick={() => changeRoom(room)}
+                                onClick={() => {
+                                    changeRoom(room);
+                                    setMobileMenuOpen(false);
+                                }}
                             >
                                 # {room}
                                 {unreadCounts[room] > 0 && (
@@ -1054,6 +1058,14 @@ const Chat = () => {
                         ➕ Nova Sala
                     </button>
                 </div>
+
+                <button 
+                    className="mobile-menu-toggle"
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    style={{ display: 'none' }}
+                >
+                    {mobileMenuOpen ? '✕' : '☰'}
+                </button>
 
                 <div className="messages-area"
                     ref={dropZoneRef}
