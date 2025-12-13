@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import io from 'socket.io-client';
 import './Chat.css';
 
@@ -29,13 +29,21 @@ socket.on('disconnect', (reason) => {
 const EMOJI_LIST = ['😀', '😂', '❤️', '👍', '🎉', '🔥', '⭐', '💯', '🚀', '👏', '🤔', '😎', '🥳', '💪', '🙌'];
 const REACTION_EMOJIS = ['👍', '❤️', '😂', '🎉', '😮', '😢'];
 
+const THEMES = {
+    default: { name: 'Padrão', primary: '#667eea', secondary: '#764ba2' },
+    ocean: { name: 'Oceano', primary: '#2196F3', secondary: '#00BCD4' },
+    forest: { name: 'Floresta', primary: '#4CAF50', secondary: '#8BC34A' },
+    sunset: { name: 'Pôr do Sol', primary: '#FF5722', secondary: '#FF9800' },
+    purple: { name: 'Roxo Espaço', primary: '#9C27B0', secondary: '#E91E63' },
+    amoled: { name: 'AMOLED', primary: '#BB86FC', secondary: '#03DAC6' }
+};
+
 const Chat = () => {
     const [username, setUsername] = useState('');
     const [joined, setJoined] = useState(false);
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
     const [roomMessages, setRoomMessages] = useState({}); // Cache de mensagens por sala
-    const [usersOnline, setUsersOnline] = useState(0);
     const [typingUsers, setTypingUsers] = useState([]);
     const [currentRoom, setCurrentRoom] = useState('geral');
     const [availableRooms, setAvailableRooms] = useState(['geral']);
@@ -76,15 +84,6 @@ const Chat = () => {
     const settingsPanelRef = useRef(null);
     const usersListPanelRef = useRef(null);
     const emojiPickerRef = useRef(null);
-
-    const THEMES = {
-        default: { name: 'Padrão', primary: '#667eea', secondary: '#764ba2' },
-        ocean: { name: 'Oceano', primary: '#2196F3', secondary: '#00BCD4' },
-        forest: { name: 'Floresta', primary: '#4CAF50', secondary: '#8BC34A' },
-        sunset: { name: 'Pôr do Sol', primary: '#FF5722', secondary: '#FF9800' },
-        purple: { name: 'Roxo Espaço', primary: '#9C27B0', secondary: '#E91E63' },
-        amoled: { name: 'AMOLED', primary: '#BB86FC', secondary: '#03DAC6' }
-    };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -128,11 +127,11 @@ const Chat = () => {
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [joined, messages]);
 
-    const playNotificationSound = () => {
+    const playNotificationSound = useCallback(() => {
         if (soundEnabled && audioRef.current) {
             audioRef.current.play().catch(() => {});
         }
-    };
+    }, [soundEnabled]);
 
     const requestNotificationPermission = () => {
         if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -157,7 +156,7 @@ const Chat = () => {
         }
     };
 
-    const showNotification = (title, body) => {
+    const showNotification = useCallback((title, body) => {
         if (typeof window !== 'undefined' && 'Notification' in window && notificationsEnabled && document.hidden) {
             try {
                 new Notification(title, {
@@ -169,7 +168,7 @@ const Chat = () => {
                 console.log('Erro ao mostrar notificação:', error);
             }
         }
-    };
+    }, [notificationsEnabled]);
 
     useEffect(() => {
         requestNotificationPermission();
@@ -268,7 +267,6 @@ const Chat = () => {
 
         // Usuário entrou
         socket.on('user_joined', (data) => {
-            setUsersOnline(data.users_online);
             setMessages((prev) => {
                 const updated = [...prev, {
                     type: 'system',
@@ -286,7 +284,6 @@ const Chat = () => {
 
         // Usuário saiu
         socket.on('user_left', (data) => {
-            setUsersOnline(data.users_online);
             setMessages((prev) => {
                 const updated = [...prev, {
                     type: 'system',
@@ -421,7 +418,7 @@ const Chat = () => {
             socket.off('message_edited');
             socket.off('message_deleted');
         };
-    }, [username, soundEnabled, notificationsEnabled, currentRoom]);
+    }, [username, soundEnabled, notificationsEnabled, currentRoom, playNotificationSound, showNotification]);
 
     const handleJoin = (e) => {
         e.preventDefault();
@@ -489,11 +486,13 @@ const Chat = () => {
 
         // Check for @ mentions
         const lastWord = value.split(/\s/).pop();
-        if (lastWord.startsWith('@') && lastWord.length > 1) {
+        if (lastWord && lastWord.startsWith('@') && lastWord.length > 1) {
             const searchTerm = lastWord.substring(1).toLowerCase();
-            const suggestions = onlineUsers.filter(user => 
-                user.toLowerCase().startsWith(searchTerm) && user !== username
-            );
+            const suggestions = onlineUsers
+                .map(u => typeof u === 'string' ? u : (u.username || ''))
+                .filter(user => 
+                    user && user.toLowerCase().startsWith(searchTerm) && user !== username
+                );
             setMentionSuggestions(suggestions);
             setShowMentions(suggestions.length > 0);
         } else {
@@ -549,7 +548,10 @@ const Chat = () => {
         if (!file) return;
 
         if (file.size > 5 * 1024 * 1024) {
-            alert('Arquivo muito grande! Máximo 5MB');
+            alert('❌ Arquivo muito grande! Máximo 5MB');
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
             return;
         }
 
@@ -563,7 +565,19 @@ const Chat = () => {
                 filename: file.name,
                 type: fileType
             });
+            
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
         };
+        
+        reader.onerror = () => {
+            alert('❌ Erro ao ler o arquivo. Tente novamente.');
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+        };
+        
         reader.readAsDataURL(file);
     };
 
@@ -674,15 +688,16 @@ const Chat = () => {
     };
 
     // Theme management
-    const changeTheme = (newTheme) => {
+    const changeTheme = useCallback((newTheme) => {
         setTheme(newTheme);
         localStorage.setItem('chatTheme', newTheme);
         document.documentElement.style.setProperty('--theme-primary', THEMES[newTheme].primary);
         document.documentElement.style.setProperty('--theme-secondary', THEMES[newTheme].secondary);
-    };
+    }, []); // THEMES é constante fora do componente
 
     useEffect(() => {
         changeTheme(theme);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Detectar clique fora dos painéis para fechar
@@ -859,24 +874,15 @@ const Chat = () => {
     // Search handlers
     const handleSearch = (query) => {
         setSearchQuery(query);
-        if (!query.trim()) {
+        if (!query || !query.trim()) {
             setSearchResults([]);
             return;
         }
 
         const results = messages.filter(msg => 
-            msg.message && msg.message.toLowerCase().includes(query.toLowerCase())
+            msg && msg.message && msg.message.toLowerCase().includes(query.toLowerCase())
         );
         setSearchResults(results);
-    };
-
-    const scrollToMessage = (index) => {
-        const messageElements = messagesContainerRef.current?.children;
-        if (messageElements && messageElements[index]) {
-            messageElements[index].scrollIntoView({ behavior: 'smooth', block: 'center' });
-            messageElements[index].classList.add('highlight-flash');
-            setTimeout(() => messageElements[index].classList.remove('highlight-flash'), 2000);
-        }
     };
 
     const clearSearch = () => {
