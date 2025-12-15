@@ -38,6 +38,9 @@ const THEMES = {
     amoled: { name: 'AMOLED', primary: '#BB86FC', secondary: '#03DAC6' }
 };
 
+// Utilidades
+const MAX_MESSAGES_DISPLAY = 500; // Limitar mensagens para performance
+
 const Chat = () => {
     const [username, setUsername] = useState('');
     const [joined, setJoined] = useState(false);
@@ -74,6 +77,8 @@ const Chat = () => {
     const [showFormatToolbar, setShowFormatToolbar] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [activeMessageMenu, setActiveMessageMenu] = useState(null); // ID da mensagem com menu ativo
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+    const [isSendingFile, setIsSendingFile] = useState(false);
     const messagesEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
     const audioRef = useRef(null);
@@ -208,14 +213,18 @@ const Chat = () => {
     useEffect(() => {
         // Receber histórico de mensagens
         socket.on('message_history', (history) => {
-            setMessages(history);
+            // Limitar mensagens para performance
+            const limitedHistory = history.slice(-MAX_MESSAGES_DISPLAY);
+            setMessages(limitedHistory);
+            setIsLoadingHistory(false);
         });
 
         // Receber nova mensagem
         socket.on('message', (msg) => {
             console.log('Mensagem recebida:', msg);
             setMessages((prev) => {
-                const updated = [...prev, msg];
+                // Limitar mensagens mantidas em memória
+                const updated = [...prev, msg].slice(-MAX_MESSAGES_DISPLAY);
                 // Atualizar cache da sala atual
                 setRoomMessages(cache => ({
                     ...cache,
@@ -418,23 +427,50 @@ const Chat = () => {
             socket.off('message_edited');
             socket.off('message_deleted');
         };
-    }, [username, soundEnabled, notificationsEnabled, currentRoom, playNotificationSound, showNotification]);
+    }, [username, soundEnabled, notificationsEnabled, currentRoom, playNotificationSound, showNotification, messages]);
 
     const handleJoin = (e) => {
         e.preventDefault();
-        if (username.trim()) {
-            console.log('Entrando na sala:', currentRoom, 'como:', username.trim());
-            socket.emit('join', { username: username.trim(), room: currentRoom });
-            setJoined(true);
+        const trimmedUsername = username.trim();
+        
+        // Validações
+        if (!trimmedUsername) {
+            alert('❌ Por favor, digite um nome de usuário');
+            return;
         }
+        
+        if (trimmedUsername.length < 2) {
+            alert('❌ Nome de usuário deve ter pelo menos 2 caracteres');
+            return;
+        }
+        
+        if (trimmedUsername.length > 20) {
+            alert('❌ Nome de usuário deve ter no máximo 20 caracteres');
+            return;
+        }
+        
+        if (!/^[a-zA-Z0-9_áéíóúãõâêôçÁÉÍÓÚÃÕÂÊÔÇ]+$/.test(trimmedUsername)) {
+            alert('❌ Nome de usuário só pode conter letras, números e underscore');
+            return;
+        }
+        
+        console.log('Entrando na sala:', currentRoom, 'como:', trimmedUsername);
+        setIsLoadingHistory(true);
+        socket.emit('join', { username: trimmedUsername, room: currentRoom });
+        setJoined(true);
+        
+        // Remover loading após receber histórico
+        setTimeout(() => setIsLoadingHistory(false), 2000);
     };
 
+    // Debounced typing indicator
     const handleTyping = () => {
-        socket.emit('typing', { is_typing: true });
-        
+        // Debounced typing indicator
         if (typingTimeoutRef.current) {
             clearTimeout(typingTimeoutRef.current);
         }
+        
+        socket.emit('typing', { is_typing: true });
         
         typingTimeoutRef.current = setTimeout(() => {
             socket.emit('typing', { is_typing: false });
@@ -555,7 +591,9 @@ const Chat = () => {
             return;
         }
 
+        setIsSendingFile(true);
         const reader = new FileReader();
+        
         reader.onload = () => {
             const fileData = reader.result;
             const fileType = file.type.startsWith('image/') ? 'image' : 'file';
@@ -569,10 +607,13 @@ const Chat = () => {
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
             }
+            
+            setTimeout(() => setIsSendingFile(false), 1000);
         };
         
         reader.onerror = () => {
             alert('❌ Erro ao ler o arquivo. Tente novamente.');
+            setIsSendingFile(false);
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
             }
@@ -936,6 +977,12 @@ const Chat = () => {
 
     return (
         <div className={`chat-container ${darkMode ? 'dark-mode' : ''}`}>
+            {isLoadingHistory && (
+                <div className="loading-overlay">
+                    <div className="loading-spinner"></div>
+                </div>
+            )}
+            
             <audio ref={audioRef} src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZjjkHF2W+7NuVPwwPUqrl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGw==" preload="auto" />
             
             <div className="chat-header">
@@ -1413,11 +1460,12 @@ const Chat = () => {
                         </button>
                         <button
                             type="button"
-                            className="file-btn"
+                            className={`file-btn ${isSendingFile ? 'sending-indicator' : ''}`}
                             onClick={() => fileInputRef.current.click()}
                             title="Enviar arquivo (máx 5MB)"
+                            disabled={isSendingFile}
                         >
-                            📎
+                            {isSendingFile ? '⏳' : '📎'}
                         </button>
                         <button
                             type="button"
