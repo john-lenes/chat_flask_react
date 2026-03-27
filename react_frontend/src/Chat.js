@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import io from 'socket.io-client';
+import toast from 'react-hot-toast';
 import './Chat.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
@@ -338,7 +339,7 @@ const Chat = () => {
 
         // Erros do servidor (ex: username em uso)
         socket.on('error', (data) => {
-            alert('\u274C ' + (data.message || 'Erro de conex\u00E3o'));
+            toast.error(data.message || 'Erro de conexão');
             setJoined(false);
         });
 
@@ -442,22 +443,22 @@ const Chat = () => {
         
         // Validações
         if (!trimmedUsername) {
-            alert('❌ Por favor, digite um nome de usuário');
+            toast.error('Por favor, digite um nome de usuário');
             return;
         }
         
         if (trimmedUsername.length < 2) {
-            alert('❌ Nome de usuário deve ter pelo menos 2 caracteres');
+            toast.error('Nome de usuário deve ter pelo menos 2 caracteres');
             return;
         }
         
         if (trimmedUsername.length > 20) {
-            alert('❌ Nome de usuário deve ter no máximo 20 caracteres');
+            toast.error('Nome de usuário deve ter no máximo 20 caracteres');
             return;
         }
         
         if (!/^[a-zA-Z0-9_áéíóúãõâêôçÁÉÍÓÚÃÕÂÊÔÇ]+$/.test(trimmedUsername)) {
-            alert('❌ Nome de usuário só pode conter letras, números e underscore');
+            toast.error('Nome de usuário só pode conter letras, números e underscore');
             return;
         }
         
@@ -571,8 +572,9 @@ const Chat = () => {
             if (!availableRooms.includes(newRoom)) {
                 setAvailableRooms(prev => [...prev, newRoom]);
                 changeRoom(newRoom);
+                toast.success(`Sala #${newRoom} criada!`);
             } else {
-                alert('Esta sala já existe!');
+                toast.error('Esta sala já existe!');
             }
         }
     };
@@ -591,10 +593,8 @@ const Chat = () => {
         if (!file) return;
 
         if (file.size > 5 * 1024 * 1024) {
-            alert('❌ Arquivo muito grande! Máximo 5MB');
-            if (fileInputRef.current) {
-                fileInputRef.current.value = '';
-            }
+            toast.error('Arquivo muito grande! Máximo 5 MB');
+            if (fileInputRef.current) fileInputRef.current.value = '';
             return;
         }
 
@@ -608,22 +608,18 @@ const Chat = () => {
             socket.emit('upload_file', {
                 file: fileData,
                 filename: file.name,
-                type: fileType
+                type: fileType,
             });
             
-            if (fileInputRef.current) {
-                fileInputRef.current.value = '';
-            }
-            
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            toast.success(`📎 ${file.name} enviado!`);
             setTimeout(() => setIsSendingFile(false), 1000);
         };
         
         reader.onerror = () => {
-            alert('❌ Erro ao ler o arquivo. Tente novamente.');
+            toast.error('Erro ao ler o arquivo. Tente novamente.');
             setIsSendingFile(false);
-            if (fileInputRef.current) {
-                fileInputRef.current.value = '';
-            }
+            if (fileInputRef.current) fileInputRef.current.value = '';
         };
         
         reader.readAsDataURL(file);
@@ -657,22 +653,29 @@ const Chat = () => {
     };
 
     const deleteMessage = (messageId) => {
-        if (window.confirm('Deseja deletar esta mensagem?')) {
-            socket.emit('delete_message', { message_id: messageId });
-        }
+        toast((t) => (
+            <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                Deletar esta mensagem?
+                <button
+                    style={{ background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}
+                    onClick={() => { socket.emit('delete_message', { message_id: messageId }); toast.dismiss(t.id); }}
+                >
+                    Deletar
+                </button>
+                <button
+                    style={{ background: '#e2e8f0', border: 'none', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' }}
+                    onClick={() => toast.dismiss(t.id)}
+                >
+                    Cancelar
+                </button>
+            </span>
+        ), { duration: 7000, icon: '🗑️' });
     };
 
     const copyMessage = (text) => {
-        navigator.clipboard.writeText(text).then(() => {
-            // Visual feedback
-            const notification = document.createElement('div');
-            notification.className = 'copy-notification';
-            notification.textContent = '✓ Copiado!';
-            document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 2000);
-        }).catch(err => {
-            console.error('Erro ao copiar:', err);
-        });
+        navigator.clipboard.writeText(text)
+            .then(() => toast.success('Mensagem copiada!'))
+            .catch(() => toast.error('Não foi possível copiar.'));
     };
 
     const isMentioned = (text) => {
@@ -903,7 +906,7 @@ const Chat = () => {
         if (files && files[0]) {
             const file = files[0];
             if (file.size > 5 * 1024 * 1024) {
-                alert('Arquivo muito grande! Máximo 5MB');
+                toast.error('Arquivo muito grande! Máximo 5 MB');
                 return;
             }
 
@@ -1200,7 +1203,7 @@ const Chat = () => {
                 <button 
                     className="mobile-menu-toggle"
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    style={{ display: 'none' }}
+                    aria-label="Menu de salas"
                 >
                     {mobileMenuOpen ? '✕' : '☰'}
                 </button>

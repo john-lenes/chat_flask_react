@@ -1,4 +1,5 @@
 import React from 'react';
+import { Toaster } from 'react-hot-toast';
 import Chat from './Chat';
 
 class ErrorBoundary extends React.Component {
@@ -78,6 +79,23 @@ function App() {
     return (
         <ErrorBoundary>
             <div className="App">
+                <Toaster
+                    position="top-right"
+                    toastOptions={{
+                        duration: 3500,
+                        style: {
+                            fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                            fontSize: '14px',
+                            maxWidth: '380px',
+                        },
+                        success: {
+                            iconTheme: { primary: '#10b981', secondary: '#fff' },
+                        },
+                        error: {
+                            iconTheme: { primary: '#ef4444', secondary: '#fff' },
+                        },
+                    }}
+                />
                 <Chat />
             </div>
         </ErrorBoundary>

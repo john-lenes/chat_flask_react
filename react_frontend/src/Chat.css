@@ -398,6 +398,58 @@ body.theme-amoled { --background: #000000; --surface: #0a0a0a; --border: #1a1a1a
 /* =================================
    USERS LIST PANEL
    ================================= */
+/* Modal overlay */
+.users-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 60px 0 0 0;
+}
+
+.users-modal-content {
+    width: 100%;
+    max-width: 320px;
+    height: calc(100vh - 60px);
+    background: var(--background);
+    border-left: 1px solid var(--border);
+    padding: 20px;
+    overflow-y: auto;
+    animation: slideInRight 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.users-modal-content h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+}
+
+.users-modal-content > button {
+    width: 100%;
+    padding: 12px;
+    background: var(--theme-primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 16px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.users-modal-content > button:hover {
+    background: var(--theme-secondary);
+}
+
+/* Keep old name as alias for backward compat */
 .users-list-panel {
     position: fixed;
     top: 0;
@@ -413,20 +465,11 @@ body.theme-amoled { --background: #000000; --surface: #0a0a0a; --border: #1a1a1a
     animation: slideInRight 0.2s ease;
 }
 
-.users-list-panel h3 {
-    margin-bottom: 16px;
-    font-size: 18px;
-}
-
-.users-list-panel button {
-    width: 100%;
-    padding: 12px;
-    background: var(--theme-primary);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    margin-top: 16px;
+.users-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
 }
 
 .user-item {
@@ -437,6 +480,44 @@ body.theme-amoled { --background: #000000; --surface: #0a0a0a; --border: #1a1a1a
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-status {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.dm-btn-small {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.dm-btn-small:hover {
+    background: var(--theme-primary);
+    border-color: var(--theme-primary);
 }
 
 .user-avatar {
@@ -761,7 +842,83 @@ body.theme-amoled { --background: #000000; --surface: #0a0a0a; --border: #1a1a1a
     color: var(--text-secondary);
 }
 
-/* Message Actions */
+/* Message action button variants */
+.reply-btn:hover { color: var(--theme-primary); background: color-mix(in srgb, var(--theme-primary) 12%, transparent); }
+.copy-btn:hover  { color: var(--text-primary); }
+.edit-btn:hover  { color: #f59e0b; background: #fef3c780; }
+.delete-btn:hover { color: var(--error); background: #fee2e280; }
+
+/* Action message (/me) */
+.action-message {
+    padding: 6px 12px;
+    margin: 4px 0 16px;
+    font-style: italic;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+/* DM messages */
+.dm-message {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    background: color-mix(in srgb, var(--theme-primary) 8%, var(--background));
+    border: 1px solid color-mix(in srgb, var(--theme-primary) 25%, transparent);
+    border-radius: 10px;
+    animation: fadeIn 0.2s ease;
+}
+
+.dm-badge {
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    background: var(--theme-primary);
+    color: #fff;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+    height: fit-content;
+}
+
+.dm-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+}
+
+/* Reply visual bar inside message */
+.reply-bar {
+    width: 3px;
+    border-radius: 2px;
+    background: var(--theme-primary);
+    align-self: stretch;
+    flex-shrink: 0;
+}
+
+.reply-bar-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.reply-content {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--surface);
+    border-radius: 6px;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
 .message-actions {
     display: flex;
     gap: 4px;
@@ -957,6 +1114,11 @@ body.theme-amoled { --background: #000000; --surface: #0a0a0a; --border: #1a1a1a
 
 .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
 .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+/* Mobile menu toggle — hidden on desktop, shown via media query */
+.mobile-menu-toggle {
+    display: none;
+}
 
 /* Scroll Button */
 .scroll-to-bottom {
@@ -1312,7 +1474,7 @@ body.theme-amoled { --background: #000000; --surface: #0a0a0a; --border: #1a1a1a
     
     /* Botão toggle sidebar mobile */
     .mobile-menu-toggle {
-        display: block !important;
+        display: block;
         position: fixed;
         bottom: 90px;
         left: 16px;
@@ -1383,6 +1545,21 @@ body.theme-amoled { --background: #000000; --surface: #0a0a0a; --border: #1a1a1a
         right: 0;
         border-radius: 0;
         box-sizing: border-box;
+    }
+
+    /* Users modal mobile — bottom sheet */
+    .users-modal {
+        align-items: flex-end;
+        justify-content: stretch;
+        padding: 0;
+    }
+
+    .users-modal-content {
+        max-width: 100%;
+        height: 75vh;
+        border-left: none;
+        border-top: 1px solid var(--border);
+        border-radius: 20px 20px 0 0;
     }
     
     .settings-panel {
