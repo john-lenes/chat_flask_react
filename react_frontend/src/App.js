@@ -1,5 +1,6 @@
 import React from 'react';
 import { Toaster } from 'react-hot-toast';
+import './index.css';
 import Chat from './Chat';
 
 class ErrorBoundary extends React.Component {

@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import io from 'socket.io-client';
 import toast from 'react-hot-toast';
-import './Chat.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
 console.log('🔌 Conectando ao backend:', BACKEND_URL);
@@ -28,7 +27,7 @@ socket.on('disconnect', (reason) => {
 });
 
 const EMOJI_LIST = ['😀', '😂', '❤️', '👍', '🎉', '🔥', '⭐', '💯', '🚀', '👏', '🤔', '😎', '🥳', '💪', '🙌'];
-const REACTION_EMOJIS = ['👍', '❤️', '😂', '🎉', '😮', '😢'];
+
 
 const THEMES = {
     default: { name: 'Padrão', primary: '#667eea', secondary: '#764ba2' },
@@ -115,14 +114,6 @@ const Chat = () => {
             setMessages(roomMessages[currentRoom]);
         }
     }, [currentRoom, roomMessages]);
-
-    useEffect(() => {
-        if (darkMode) {
-            document.body.classList.add('dark-mode');
-        } else {
-            document.body.classList.remove('dark-mode');
-        }
-    }, [darkMode]);
 
     useEffect(() => {
         const handleBeforeUnload = (e) => {
@@ -755,9 +746,8 @@ const Chat = () => {
     const changeTheme = useCallback((newTheme) => {
         setTheme(newTheme);
         localStorage.setItem('chatTheme', newTheme);
-        document.documentElement.style.setProperty('--theme-primary', THEMES[newTheme].primary);
-        document.documentElement.style.setProperty('--theme-secondary', THEMES[newTheme].secondary);
-    }, []); // THEMES é constante fora do componente
+        document.body.dataset.theme = newTheme === 'default' ? '' : newTheme;
+    }, []);
 
     useEffect(() => {
         changeTheme(theme);
@@ -857,25 +847,7 @@ const Chat = () => {
         return text.match(urlRegex) || [];
     };
 
-    const renderMessageWithLinks = (msg) => {
-        const links = detectLinks(msg.message);
-        if (links.length === 0) {
-            return <div className="message-text" dangerouslySetInnerHTML={{ __html: formatText(msg.message) }} />;
-        }
 
-        return (
-            <>
-                <div className="message-text" dangerouslySetInnerHTML={{ __html: formatText(msg.message) }} />
-                {links.map((link, index) => (
-                    <div key={index} className="link-preview-card">
-                        <a href={link} target="_blank" rel="noopener noreferrer" className="link-preview-url">
-                            🔗 {link.length > 50 ? link.substring(0, 50) + '...' : link}
-                        </a>
-                    </div>
-                ))}
-            </>
-        );
-    };
 
     // Drag and Drop handlers
     const handleDragEnter = (e) => {
@@ -957,333 +929,337 @@ const Chat = () => {
 
     // Apply theme to body
     React.useEffect(() => {
-        document.body.className = `theme-${theme}`;
-    }, [theme]);
+        document.body.dataset.theme = theme === 'default' ? '' : theme;
+        if (darkMode) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }, [theme, darkMode]);
 
     if (!joined) {
         return (
-            <div className={`chat-container ${darkMode ? 'dark-mode' : ''}`}>
-                <div className="join-screen">
-                    <div className="join-box">
-                        <h1>💬 Chat em Tempo Real</h1>
-                        <p>Entre com seu nome para começar</p>
-                        <form onSubmit={handleJoin}>
-                            <input
-                                type="text"
-                                value={username}
-                                onChange={(e) => setUsername(e.target.value)}
-                                placeholder="Digite seu nome..."
-                                className="username-input"
-                                maxLength={20}
-                                autoFocus
-                            />
-                            <div className="room-selector">
-                                <label>Escolha uma sala:</label>
-                                <select value={currentRoom} onChange={(e) => setCurrentRoom(e.target.value)}>
-                                    {availableRooms.map(room => (
-                                        <option key={room} value={room}>{room}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <button type="submit" className="join-button">
-                                Entrar no Chat
-                            </button>
-                        </form>
-                        <div className="theme-toggle" onClick={() => setDarkMode(!darkMode)}>
-                            {darkMode ? '☀️' : '🌙'} {darkMode ? 'Modo Claro' : 'Modo Escuro'}
+            <div className="flex items-center justify-center min-h-screen bg-surface p-4">
+                <div className="bg-theme border border-theme rounded-2xl shadow-2xl w-full max-w-sm p-8 animate-[fadeInUp_.3s_ease_both]">
+                    <h1 className="text-2xl font-bold text-theme mb-1">💬 Chat em Tempo Real</h1>
+                    <p className="text-muted text-sm mb-6">Entre com seu nome para começar</p>
+
+                    <form onSubmit={handleJoin} className="flex flex-col gap-4">
+                        <input
+                            type="text"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            placeholder="Digite seu nome..."
+                            className="w-full px-4 py-3 rounded-xl border border-theme bg-surface text-theme text-sm focus-primary placeholder:text-muted transition-colors"
+                            maxLength={20}
+                            autoFocus
+                        />
+                        <div>
+                            <label className="block text-xs font-medium text-muted mb-1.5">Escolha uma sala:</label>
+                            <select
+                                value={currentRoom}
+                                onChange={(e) => setCurrentRoom(e.target.value)}
+                                className="w-full px-4 py-3 rounded-xl border border-theme bg-surface text-theme text-sm focus-primary transition-colors"
+                            >
+                                {availableRooms.map(room => (
+                                    <option key={room} value={room}>{room}</option>
+                                ))}
+                            </select>
                         </div>
-                    </div>
+                        <button
+                            type="submit"
+                            className="w-full py-3 bg-primary text-white rounded-xl font-semibold text-sm hover:bg-primary-dark active:scale-[.98] transition-all disabled:opacity-50"
+                        >
+                            Entrar no Chat
+                        </button>
+                    </form>
+
+                    <button
+                        onClick={() => setDarkMode(!darkMode)}
+                        className="mt-4 w-full py-2.5 text-sm text-muted bg-surface border border-theme rounded-xl hover:bg-theme transition-colors"
+                    >
+                        {darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro'}
+                    </button>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className={`chat-container ${darkMode ? 'dark-mode' : ''}`}>
+        <div className="flex flex-col h-screen bg-theme text-theme overflow-hidden">
+            {/* Loading overlay */}
             {isLoadingHistory && (
-                <div className="loading-overlay">
-                    <div className="loading-spinner"></div>
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999]">
+                    <div className="loading-spinner" />
                 </div>
             )}
-            
-            <audio ref={audioRef} src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZjjkHF2W+7NuVPwwPUqrl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGw==" preload="auto" />
-            
-            <div className="chat-header">
-                <div>
-                    <h1>💬 Chat em Tempo Real</h1>
-                    <p className="user-info">
-                        Conectado como: <strong>{username}</strong>
-                        <span className="room-badge">#{currentRoom}</span>
+
+            {/* Audio */}
+            <audio ref={audioRef} src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZjjkHF2W+7NuVPwwPUqrl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGwQ4kdTxzHksBSV4yPDgkj4IFV6w5NqGHgwOUqvl7qtiGw==" preload="auto" />
+
+            {/* ── HEADER ─────────────────────────── */}
+            <header className="flex items-center justify-between px-4 py-3 bg-theme border-b border-theme sticky top-0 z-50 shadow-sm shrink-0">
+                <div className="min-w-0">
+                    <h1 className="text-lg font-bold leading-none">💬 Chat em Tempo Real</h1>
+                    <p className="text-xs text-muted mt-0.5 truncate">
+                        Conectado como: <strong className="font-semibold text-theme">{username}</strong>
+                        <span className="ml-1.5 inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary text-white">#{currentRoom}</span>
                         {connectionStatus !== 'connected' && (
-                            <span className={`connection-status status-${connectionStatus}`}>
+                            <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium ${connectionStatus === 'connecting' ? 'bg-amber-500 text-white' : 'bg-red-500 text-white'}`}>
                                 {connectionStatus === 'connecting' ? '🔄 Conectando...' : '⚠️ Desconectado'}
                             </span>
                         )}
                     </p>
                 </div>
-                <div className="header-actions">
-                    <button className="search-btn" onClick={() => setShowSearch(!showSearch)} title="Pesquisar mensagens">
-                        🔍
-                    </button>
-                    <div className="online-users" onClick={() => setShowUsersList(!showUsersList)}>
-                        <span className={`online-dot ${connectionStatus === 'connected' ? 'connected' : ''}`}></span>
+                <div className="flex items-center gap-2 shrink-0 ml-3">
+                    <button
+                        onClick={() => setShowSearch(!showSearch)}
+                        className="h-9 w-9 flex items-center justify-center rounded-lg border border-theme bg-surface hover:bg-theme transition-colors text-base"
+                        title="Pesquisar mensagens"
+                    >🔍</button>
+                    <button
+                        onClick={() => setShowUsersList(!showUsersList)}
+                        className="h-9 flex items-center gap-1.5 px-3 rounded-lg border border-theme bg-surface hover:bg-theme transition-colors text-xs font-medium"
+                    >
+                        <span className={`w-2 h-2 rounded-full ${connectionStatus === 'connected' ? 'bg-green-500' : 'bg-slate-400'}`} />
                         {onlineUsers.length} online
-                    </div>
-                    <button className="settings-btn" onClick={() => setShowSettings(!showSettings)}>
-                        ⚙️
                     </button>
+                    <button
+                        onClick={() => setShowSettings(!showSettings)}
+                        className="settings-btn h-9 w-9 flex items-center justify-center rounded-lg border border-theme bg-surface hover:bg-theme transition-colors text-base"
+                    >⚙️</button>
                 </div>
-            </div>
+            </header>
 
+            {/* ── SEARCH BAR ─────────────────────── */}
             {showSearch && (
-                <div className="search-bar">
+                <div className="flex gap-2 px-4 py-2 bg-surface border-b border-theme items-center shrink-0">
                     <input
                         type="text"
                         value={searchQuery}
                         onChange={(e) => handleSearch(e.target.value)}
                         placeholder="Pesquisar mensagens..."
-                        className="search-input"
+                        className="flex-1 px-3 py-2 text-sm rounded-lg border border-theme bg-theme text-theme focus-primary placeholder:text-muted transition-colors"
                         autoFocus
                     />
-                    <button className="clear-search-btn" onClick={clearSearch}>✗</button>
+                    <button onClick={clearSearch} className="h-9 px-3 rounded-lg bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition-colors">✗</button>
                     {searchResults.length > 0 && (
-                        <div className="search-results-count">
+                        <span className="h-9 flex items-center px-3 rounded-lg bg-primary text-white text-xs font-semibold">
                             {searchResults.length} resultado{searchResults.length !== 1 ? 's' : ''}
-                        </div>
+                        </span>
                     )}
                 </div>
             )}
 
+            {/* ── PINNED BANNER ──────────────────── */}
             {showPinned && pinnedMessages.length > 0 && (
-                <div className="pinned-banner">
-                    <div className="pinned-header">
+                <div className="px-4 py-3 bg-amber-50 border-b border-amber-300 text-amber-900 dark:bg-amber-950 dark:border-amber-700 dark:text-amber-200 shrink-0">
+                    <div className="flex items-center justify-between mb-2 font-semibold text-sm">
                         <span>📌 Mensagens Fixadas ({pinnedMessages.length})</span>
-                        <button onClick={() => setShowPinned(false)}>✗</button>
+                        <button onClick={() => setShowPinned(false)} className="text-lg leading-none opacity-60 hover:opacity-100">✗</button>
                     </div>
-                    <div className="pinned-list">
+                    <div className="flex flex-col gap-1.5">
                         {pinnedMessages.map(msg => (
-                            <div key={msg.id} className="pinned-item">
-                                <span className="pinned-user">{msg.username}:</span>
-                                <span className="pinned-text">{msg.message.substring(0, 50)}{msg.message.length > 50 ? '...' : ''}</span>
-                                <button onClick={() => togglePin(msg)} className="unpin-btn" title="Desafixar">✗</button>
+                            <div key={msg.id} className="flex items-center gap-2 px-2 py-1.5 bg-white/50 dark:bg-black/20 rounded-lg text-xs">
+                                <span className="font-semibold">{msg.username}:</span>
+                                <span className="flex-1 truncate">{msg.message.substring(0, 50)}{msg.message.length > 50 ? '...' : ''}</span>
+                                <button onClick={() => togglePin(msg)} className="opacity-60 hover:opacity-100">✗</button>
                             </div>
                         ))}
                     </div>
                 </div>
             )}
 
+            {/* ── USERS MODAL ────────────────────── */}
             {showUsersList && (
-                <div className="users-modal" onClick={() => setShowUsersList(false)}>
-                    <div className="users-modal-content" ref={usersListPanelRef} onClick={(e) => e.stopPropagation()}>
-                        <h3>Usuários Online ({onlineUsers.length})</h3>
-                        <div className="users-list">
+                <div className="fixed inset-0 bg-black/40 z-[1000] flex justify-end" onClick={() => setShowUsersList(false)}>
+                    <div
+                        ref={usersListPanelRef}
+                        onClick={(e) => e.stopPropagation()}
+                        className="w-full max-w-xs h-full bg-theme border-l border-theme flex flex-col p-5 overflow-y-auto animate-[slideInRight_.22s_ease_both]"
+                    >
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-base font-semibold">Usuários Online ({onlineUsers.length})</h3>
+                            <button onClick={() => setShowUsersList(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface transition-colors text-muted">✗</button>
+                        </div>
+                        <div className="flex flex-col gap-2 flex-1">
                             {onlineUsers.map((user, idx) => (
-                                <div key={idx} className="user-item">
-                                    <div className="user-avatar" style={{backgroundColor: user.color}}>
+                                <div key={idx} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-surface">
+                                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0" style={{backgroundColor: user.color}}>
                                         {user.username.charAt(0).toUpperCase()}
                                     </div>
-                                    <div className="user-details">
-                                        <span className="user-name">{user.username}</span>
-                                        <span className={`user-status status-${user.status}`}>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-sm font-semibold truncate">{user.username}</div>
+                                        <div className="text-xs text-muted">
                                             {user.status === 'online' ? '🟢' : user.status === 'ausente' ? '🟡' : '🔴'} {user.status}
-                                        </span>
+                                        </div>
                                     </div>
                                     {user.username !== username && (
-                                        <button 
-                                            className="dm-btn-small"
+                                        <button
                                             onClick={() => sendDM(user.username)}
-                                        >
-                                            💬
-                                        </button>
+                                            className="w-8 h-8 flex items-center justify-center rounded-lg border border-theme hover:bg-primary hover:border-primary hover:text-white transition-all"
+                                        >💬</button>
                                     )}
                                 </div>
                             ))}
                         </div>
-                        <button onClick={() => setShowUsersList(false)}>Fechar</button>
                     </div>
                 </div>
             )}
 
+            {/* ── SETTINGS PANEL ─────────────────── */}
             {showSettings && (
-                <div className="settings-panel" ref={settingsPanelRef}>
-                    <div className="setting-item">
-                        <label>
-                            <input
-                                type="checkbox"
-                                checked={soundEnabled}
-                                onChange={(e) => setSoundEnabled(e.target.checked)}
-                            />
-                            🔔 Notificações Sonoras
+                <div
+                    ref={settingsPanelRef}
+                    className="fixed top-14 right-4 w-[300px] bg-theme border border-theme rounded-2xl shadow-2xl p-4 z-[1000] animate-[fadeInUp_.2s_ease_both]"
+                >
+                    {[
+                        { label: '🔔 Notificações Sonoras', checked: soundEnabled, onChange: (v) => setSoundEnabled(v) },
+                        { label: darkMode ? '☀️ Modo Claro' : '🌙 Modo Escuro', checked: darkMode, onChange: (v) => setDarkMode(v) },
+                        { label: '🔔 Notificações Desktop', checked: notificationsEnabled, onChange: (v) => { if (v) requestNotificationPermission(); else setNotificationsEnabled(false); } },
+                    ].map(({ label, checked, onChange }) => (
+                        <label key={label} className="flex items-center gap-3 py-3 border-b border-theme cursor-pointer text-sm">
+                            <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="w-4 h-4 accent-[var(--tw-primary)]" />
+                            {label}
                         </label>
-                    </div>
-                    <div className="setting-item">
-                        <label>
-                            <input
-                                type="checkbox"
-                                checked={darkMode}
-                                onChange={(e) => setDarkMode(e.target.checked)}
-                            />
-                            {darkMode ? '☀️' : '🌙'} Modo {darkMode ? 'Claro' : 'Escuro'}
-                        </label>
-                    </div>
-                    <div className="setting-item">
-                        <label>🎨 Tema:</label>
-                        <div className="theme-selector">
+                    ))}
+                    <div className="py-3 border-b border-theme">
+                        <span className="text-sm font-medium">🎨 Tema</span>
+                        <div className="grid grid-cols-6 gap-2 mt-2">
                             {Object.keys(THEMES).map(themeName => (
                                 <button
                                     key={themeName}
-                                    className={`theme-option ${theme === themeName ? 'active' : ''}`}
                                     onClick={() => changeTheme(themeName)}
                                     title={THEMES[themeName].name}
-                                    style={{
-                                        backgroundColor: THEMES[themeName].primary,
-                                        border: theme === themeName ? '3px solid #fff' : '2px solid transparent'
-                                    }}
+                                    className={`w-full aspect-square rounded-lg transition-all hover:scale-110 flex items-center justify-center text-white text-sm font-bold ${theme === themeName ? 'ring-2 ring-white ring-offset-2 scale-110' : ''}`}
+                                    style={{ backgroundColor: THEMES[themeName].primary }}
                                 >
-                                    {themeName === theme && '✓'}
+                                    {theme === themeName ? '✓' : ''}
                                 </button>
                             ))}
                         </div>
-                        <div className="theme-name">{THEMES[theme].name}</div>
+                        <p className="text-xs text-muted mt-2 text-center">{THEMES[theme].name}</p>
                     </div>
-                    <div className="setting-item">
-                        <label>
-                            <input
-                                type="checkbox"
-                                checked={notificationsEnabled}
-                                onChange={(e) => {
-                                    if (e.target.checked) {
-                                        requestNotificationPermission();
-                                    } else {
-                                        setNotificationsEnabled(false);
-                                    }
-                                }}
-                            />
-                            🔔 Notificações Desktop
-                        </label>
-                    </div>
-                    <div className="setting-item">
-                        <button onClick={() => setShowPinned(!showPinned)}>
+                    <div className="flex flex-col gap-2 pt-3">
+                        <button onClick={() => setShowPinned(!showPinned)} className="w-full py-2 text-sm bg-surface border border-theme rounded-xl hover:bg-theme transition-colors">
                             📌 {showPinned ? 'Ocultar' : 'Ver'} Mensagens Fixadas
                         </button>
-                    </div>
-                    <div className="setting-item">
-                        <button onClick={() => socket.emit('message', { message: '/help' })}>
+                        <button onClick={() => socket.emit('message', { message: '/help' })} className="w-full py-2 text-sm bg-surface border border-theme rounded-xl hover:bg-theme transition-colors">
                             ❓ Ver Comandos
                         </button>
                     </div>
                 </div>
             )}
 
-            <div className="chat-layout">
-                <div className={`rooms-sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-                    <h3>Salas</h3>
-                    <div className="rooms-list">
+            {/* ── CHAT LAYOUT ────────────────────── */}
+            <div className="flex flex-1 overflow-hidden">
+                {/* Sidebar */}
+                <aside className={`${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed md:relative top-0 left-0 h-full z-[999] w-60 bg-surface border-r border-theme flex flex-col transition-transform duration-300 ease-in-out shrink-0`}>
+                    <div className="px-4 pt-4 pb-2 text-xs font-semibold text-muted uppercase tracking-wider">Salas</div>
+                    <div className="flex-1 overflow-y-auto">
                         {availableRooms.map(room => (
-                            <div
+                            <button
                                 key={room}
-                                className={`room-item ${room === currentRoom ? 'active' : ''}`}
-                                onClick={() => {
-                                    changeRoom(room);
-                                    setMobileMenuOpen(false);
-                                }}
+                                onClick={() => { changeRoom(room); setMobileMenuOpen(false); }}
+                                className={`w-full flex items-center justify-between px-4 py-2.5 text-sm text-left border-l-2 transition-colors ${room === currentRoom ? 'border-primary bg-theme font-semibold text-primary' : 'border-transparent hover:bg-theme text-theme'}`}
                             >
-                                # {room}
+                                <span># {room}</span>
                                 {unreadCounts[room] > 0 && (
-                                    <span className="unread-badge">{unreadCounts[room]}</span>
+                                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-500 text-white">
+                                        {unreadCounts[room]}
+                                    </span>
                                 )}
-                            </div>
+                            </button>
                         ))}
                     </div>
-                    <button className="create-room-btn" onClick={createNewRoom}>
-                        ➕ Nova Sala
-                    </button>
-                </div>
+                    <div className="p-3">
+                        <button onClick={createNewRoom} className="w-full py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary-dark transition-colors">
+                            ➕ Nova Sala
+                        </button>
+                    </div>
+                </aside>
 
-                <button 
-                    className="mobile-menu-toggle"
+                {/* Mobile sidebar toggle */}
+                <button
                     onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                    aria-label="Menu de salas"
+                    className="md:hidden fixed bottom-24 left-4 z-[998] w-11 h-11 bg-primary text-white rounded-full shadow-lg flex items-center justify-center text-lg"
                 >
                     {mobileMenuOpen ? '✕' : '☰'}
                 </button>
 
-                <div className="messages-area"
+                {/* Messages area */}
+                <main
+                    className="flex-1 flex flex-col overflow-hidden relative"
                     ref={dropZoneRef}
                     onDragEnter={handleDragEnter}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                 >
+                    {/* Drag overlay */}
                     {isDragging && (
-                        <div className="drop-overlay">
-                            <div className="drop-message">
-                                <div className="drop-icon">📎</div>
-                                <div>Solte o arquivo aqui para enviar</div>
-                                <div className="drop-hint">(máximo 5MB)</div>
+                        <div className="absolute inset-0 bg-primary/90 flex items-center justify-center z-50">
+                            <div className="text-center text-white">
+                                <div className="text-6xl mb-4">📎</div>
+                                <div className="text-xl font-semibold">Solte o arquivo aqui</div>
+                                <div className="text-sm opacity-80 mt-1">máximo 5MB</div>
                             </div>
                         </div>
                     )}
-                    <div className="messages-container" ref={messagesContainerRef} onScroll={handleScroll}>
+
+                    {/* Messages list */}
+                    <div className="flex-1 overflow-y-auto px-4 py-5 space-y-1" ref={messagesContainerRef} onScroll={handleScroll}>
                         {messages.map((msg, index) => {
                             if (msg.type === 'system') {
                                 return (
-                                    <div key={index} className="system-message">
-                                        <span>{msg.message}</span>
+                                    <div key={index} className="flex justify-center my-3">
+                                        <span className="px-4 py-1.5 text-xs text-muted bg-surface rounded-full border border-theme">{msg.message}</span>
                                     </div>
                                 );
                             }
                             if (msg.type === 'command') {
                                 return (
-                                    <div key={index} className={`command-message ${msg.commandType}`}>
-                                        <pre>{msg.message}</pre>
+                                    <div key={index} className="my-3 p-3 bg-surface border border-theme rounded-xl">
+                                        <pre className="text-xs text-theme font-mono whitespace-pre-wrap break-words">{msg.message}</pre>
                                     </div>
                                 );
                             }
                             if (msg.type === 'action') {
                                 return (
-                                    <div key={index} className="action-message">
+                                    <div key={index} className="my-2 px-3 py-1 italic text-sm text-muted">
                                         <span style={{color: msg.color}}>{msg.username}</span> {msg.message}
                                     </div>
                                 );
                             }
                             if (msg.type === 'dm') {
                                 return (
-                                    <div key={index} className="dm-message">
-                                        <div className="dm-badge">💬 DM</div>
-                                        <div className="dm-content">
-                                            <strong style={{color: msg.color}}>
-                                                {msg.from === username ? `Você → ${msg.to}` : `${msg.from} → Você`}
-                                            </strong>
-                                            <div>{msg.message}</div>
-                                            <span className="message-time">{formatTime(msg.timestamp)}</span>
+                                    <div key={index} className="flex gap-3 items-start px-3 py-2.5 my-2 bg-surface border-l-2 border-primary rounded-xl">
+                                        <span className="flex items-center px-2 py-0.5 bg-primary text-white rounded-lg text-[11px] font-bold shrink-0 mt-0.5">💬 DM</span>
+                                        <div className="flex-1 min-w-0 text-sm">
+                                            <strong style={{color: msg.color}}>{msg.from === username ? `Você → ${msg.to}` : `${msg.from} → Você`}</strong>
+                                            <div className="mt-0.5">{msg.message}</div>
+                                            <span className="text-[11px] text-muted mt-0.5 block">{formatTime(msg.timestamp)}</span>
                                         </div>
                                     </div>
                                 );
                             }
                             if (msg.type === 'file') {
                                 return (
-                                    <div key={msg.id || index} className={`message ${msg.username === username ? 'own-message' : ''}`}>
-                                        <div className="message-avatar" style={{backgroundColor: msg.color}}>
+                                    <div key={msg.id || index} className={`flex gap-3 mb-2 ${msg.username === username ? 'flex-row-reverse' : ''}`}>
+                                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0 mt-0.5" style={{backgroundColor: msg.color}}>
                                             {msg.username.charAt(0).toUpperCase()}
                                         </div>
-                                        <div className="message-content">
-                                            <div className="message-header">
-                                                <span className="message-username" style={{color: msg.color}}>
-                                                    {msg.username}
-                                                </span>
-                                                <span className="message-time">{formatTime(msg.timestamp)}</span>
+                                        <div className={`flex flex-col ${msg.username === username ? 'items-end' : 'items-start'} min-w-0 max-w-[80%]`}>
+                                            <div className="flex items-baseline gap-2 mb-1">
+                                                <span className="text-xs font-semibold" style={{color: msg.color}}>{msg.username}</span>
+                                                <span className="text-[11px] text-muted">{formatTime(msg.timestamp)}</span>
                                             </div>
-                                            <div className="message-text">{msg.message}</div>
+                                            <div className="text-sm">{msg.message}</div>
                                             {msg.file && msg.file.type === 'image' && (
-                                                <img 
-                                                    src={msg.file.data} 
-                                                    alt={msg.file.name}
-                                                    style={{maxWidth: '300px', maxHeight: '300px', borderRadius: '8px', marginTop: '8px'}}
-                                                />
+                                                <img src={msg.file.data} alt={msg.file.name} className="max-w-[280px] max-h-[280px] rounded-xl mt-2" />
                                             )}
                                             {msg.file && msg.file.type === 'file' && (
-                                                <a href={msg.file.data} download={msg.file.name} className="file-download">
+                                                <a href={msg.file.data} download={msg.file.name} className="inline-flex items-center gap-2 mt-2 px-3 py-2 text-xs bg-surface border border-theme rounded-lg text-primary hover:border-primary transition-colors">
                                                     📎 {msg.file.name}
                                                 </a>
                                             )}
@@ -1291,253 +1267,209 @@ const Chat = () => {
                                     </div>
                                 );
                             }
+
+                            const isOwn = msg.username === username;
+                            const mentioned = isMentioned(msg.message);
                             return (
-                                <div 
-                                    key={msg.id || index} 
-                                    className={`message ${msg.username === username ? 'own-message' : ''} ${isMentioned(msg.message) ? 'mentioned' : ''} ${activeMessageMenu === msg.id ? 'menu-active' : ''}`}
+                                <div
+                                    key={msg.id || index}
+                                    className={`group flex gap-3 mb-1 ${isOwn ? 'flex-row-reverse' : ''} ${mentioned ? 'bg-amber-50 dark:bg-amber-950/30 border-l-2 border-amber-400 px-2 rounded-md' : ''}`}
                                     onClick={() => setActiveMessageMenu(activeMessageMenu === msg.id ? null : msg.id)}
                                 >
-                                    <div className="message-avatar" style={{backgroundColor: msg.color}}>
+                                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs shrink-0 mt-0.5" style={{backgroundColor: msg.color}}>
                                         {msg.username.charAt(0).toUpperCase()}
                                     </div>
-                                    <div className="message-content">
-                                        <div className="message-header">
-                                            <span className="message-username" style={{color: msg.color}}>
-                                                {msg.username}
-                                            </span>
-                                            <span className="message-time" title={new Date(msg.timestamp).toLocaleString('pt-BR')}>
-                                                {formatTime(msg.timestamp)}
-                                            </span>
+                                    <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} min-w-0 max-w-[75%]`}>
+                                        <div className="flex items-baseline gap-2 mb-0.5">
+                                            <span className="text-xs font-semibold" style={{color: msg.color}}>{msg.username}</span>
+                                            <span className="text-[11px] text-muted">{formatTime(msg.timestamp)}</span>
                                         </div>
                                         {msg.replyTo && (
-                                            <div className="reply-preview">
-                                                <div className="reply-bar"></div>
-                                                <div className="reply-content">
-                                                    <span className="reply-username">{msg.replyTo.username}</span>
-                                                    <span className="reply-text">{msg.replyTo.message}</span>
-                                                </div>
+                                            <div className="flex gap-2 mb-1 px-2 py-1.5 bg-surface border-l-2 border-primary rounded-lg text-xs max-w-full">
+                                                <span className="font-semibold text-muted">{msg.replyTo.username}</span>
+                                                <span className="text-muted truncate">{msg.replyTo.message}</span>
                                             </div>
                                         )}
                                         {editingMessageId === msg.id ? (
-                                            <div className="message-edit-container">
+                                            <div className="flex gap-2 items-center w-full">
                                                 <input
                                                     type="text"
                                                     value={editingText}
                                                     onChange={(e) => setEditingText(e.target.value)}
-                                                    className="edit-input"
+                                                    className="flex-1 px-3 py-1.5 text-sm border border-theme rounded-lg bg-surface text-theme focus-primary"
                                                     autoFocus
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') saveEditMessage(msg.id);
-                                                        if (e.key === 'Escape') cancelEdit();
-                                                    }}
+                                                    onKeyDown={(e) => { if (e.key === 'Enter') saveEditMessage(msg.id); if (e.key === 'Escape') cancelEdit(); }}
                                                 />
-                                                <div className="edit-buttons">
-                                                    <button onClick={() => saveEditMessage(msg.id)} className="btn-save">✓</button>
-                                                    <button onClick={cancelEdit} className="btn-cancel">✗</button>
-                                                </div>
+                                                <button onClick={() => saveEditMessage(msg.id)} className="px-2.5 py-1.5 bg-green-500 text-white rounded-lg text-sm hover:bg-green-600">✓</button>
+                                                <button onClick={cancelEdit} className="px-2.5 py-1.5 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600">✗</button>
                                             </div>
                                         ) : (
                                             <>
-                                                {renderMessageWithLinks(msg)}
-                                                {msg.edited && <span className="edited-badge"> (editado)</span>}
+                                                {isOwn ? (
+                                                    <div className="px-3.5 py-2 bg-primary text-white rounded-2xl rounded-tr-sm text-sm leading-relaxed break-words max-w-full"
+                                                         dangerouslySetInnerHTML={{ __html: formatText(msg.message) }} />
+                                                ) : (
+                                                    <div className="px-3.5 py-2 bg-surface rounded-2xl rounded-tl-sm text-sm leading-relaxed break-words max-w-full border border-theme"
+                                                         dangerouslySetInnerHTML={{ __html: formatText(msg.message) }} />
+                                                )}
+                                                {detectLinks(msg.message).map((link, li) => (
+                                                    <a key={li} href={link} target="_blank" rel="noopener noreferrer"
+                                                        className="flex items-center gap-1.5 mt-1 text-xs text-primary bg-surface border border-theme px-2 py-1.5 rounded-lg hover:border-primary transition-colors break-all max-w-full">
+                                                        🔗 {link.length > 50 ? link.substring(0, 50) + '…' : link}
+                                                    </a>
+                                                ))}
+                                                {msg.edited && <span className="text-[10px] text-muted mt-0.5">(editado)</span>}
                                             </>
                                         )}
-                                        <div className="message-actions">
-                                            <button onClick={() => togglePin(msg)} title={pinnedMessages.some(p => p.id === msg.id) ? 'Desafixar' : 'Fixar mensagem'}>
-                                                {pinnedMessages.some(p => p.id === msg.id) ? '📌' : '📍'}
-                                            </button>
-                                            <button 
-                                                className="action-btn reply-btn" 
-                                                onClick={() => startReply(msg)}
-                                                title="Responder"
-                                            >
-                                                ↩️
-                                            </button>
-                                            <button 
-                                                className="action-btn copy-btn" 
-                                                onClick={() => copyMessage(msg.message)}
-                                                title="Copiar mensagem"
-                                            >
-                                                📋
-                                            </button>
-                                            {msg.username === username && editingMessageId !== msg.id && msg.type !== 'system' && (
+                                        <div className={`flex gap-1 mt-1 transition-opacity ${activeMessageMenu === msg.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                            {[
+                                                { icon: pinnedMessages.some(p => p.id === msg.id) ? '📌' : '📍', action: () => togglePin(msg), title: 'Fixar' },
+                                                { icon: '↩️', action: () => startReply(msg), title: 'Responder' },
+                                                { icon: '📋', action: () => copyMessage(msg.message), title: 'Copiar' },
+                                            ].map(({ icon, action, title }) => (
+                                                <button key={title} onClick={action} title={title}
+                                                    className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface border border-theme hover:bg-theme text-xs transition-colors">
+                                                    {icon}
+                                                </button>
+                                            ))}
+                                            {isOwn && editingMessageId !== msg.id && msg.type !== 'system' && (
                                                 <>
-                                                    <button 
-                                                        className="action-btn edit-btn" 
-                                                        onClick={() => startEditMessage(msg)}
-                                                        title="Editar mensagem"
-                                                    >
-                                                        ✏️
-                                                    </button>
-                                                    <button 
-                                                        className="action-btn delete-btn" 
-                                                        onClick={() => deleteMessage(msg.id)}
-                                                        title="Deletar mensagem"
-                                                    >
-                                                        🗑️
-                                                    </button>
+                                                    <button onClick={() => startEditMessage(msg)} title="Editar"
+                                                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface border border-theme hover:bg-amber-100 dark:hover:bg-amber-900 text-xs transition-colors">✏️</button>
+                                                    <button onClick={() => deleteMessage(msg.id)} title="Deletar"
+                                                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface border border-theme hover:bg-red-100 dark:hover:bg-red-900 text-xs transition-colors">🗑️</button>
                                                 </>
                                             )}
                                         </div>
-                                        <div className="message-reactions">
-                                            {reactions[msg.id] && Object.entries(reactions[msg.id]).map(([emoji, users]) => (
-                                                <button
-                                                    key={emoji}
-                                                    className={`reaction ${users.includes(username) ? 'active' : ''}`}
-                                                    onClick={() => addReaction(msg.id, emoji)}
-                                                    title={users.join(', ')}
-                                                >
-                                                    {emoji} {users.length}
+                                        {reactions[msg.id] && Object.keys(reactions[msg.id]).length > 0 && (
+                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                {Object.entries(reactions[msg.id]).map(([emoji, users]) => (
+                                                    <button key={emoji} onClick={() => addReaction(msg.id, emoji)} title={users.join(', ')}
+                                                        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-colors ${users.includes(username) ? 'bg-primary text-white border-primary' : 'bg-surface border-theme hover:bg-theme'}`}>
+                                                        {emoji} {users.length}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                        <div className={`flex gap-1 mt-0.5 transition-opacity ${activeMessageMenu === msg.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                            {['❤️', '👍', '😂', '😮', '😢', '😡'].map(emoji => (
+                                                <button key={emoji} onClick={() => quickReaction(msg.id, emoji)}
+                                                    className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-surface hover:scale-125 text-sm transition-all">
+                                                    {emoji}
                                                 </button>
                                             ))}
-                                            <div className="quick-reactions">
-                                                {['❤️', '👍', '😂', '😮', '😢', '😡'].map(emoji => (
-                                                    <button
-                                                        key={emoji}
-                                                        onClick={() => quickReaction(msg.id, emoji)}
-                                                        className="quick-reaction-btn"
-                                                        title={`Reagir com ${emoji}`}
-                                                    >
-                                                        {emoji}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                            <div className="add-reaction">
-                                                {REACTION_EMOJIS.map(emoji => (
-                                                    <button
-                                                        key={emoji}
-                                                        onClick={() => addReaction(msg.id, emoji)}
-                                                        className="reaction-option"
-                                                    >
-                                                        {emoji}
-                                                    </button>
-                                                ))}
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             );
                         })}
                         {typingUsers.length > 0 && (
-                            <div className="typing-indicator">
-                                <div className="typing-dots">
-                                    <span></span>
-                                    <span></span>
-                                    <span></span>
+                            <div className="flex items-center gap-2 px-2 py-2 text-xs text-muted">
+                                <div className="flex gap-1">
+                                    <span className="w-1.5 h-1.5 bg-muted rounded-full typing-dot" />
+                                    <span className="w-1.5 h-1.5 bg-muted rounded-full typing-dot" />
+                                    <span className="w-1.5 h-1.5 bg-muted rounded-full typing-dot" />
                                 </div>
-                                <span>{typingUsers.join(', ')} {typingUsers.length === 1 ? 'está' : 'estão'} digitando...</span>
+                                {typingUsers.join(', ')} {typingUsers.length === 1 ? 'está' : 'estão'} digitando…
                             </div>
                         )}
                         <div ref={messagesEndRef} />
                     </div>
 
+                    {/* Scroll to bottom */}
                     {showScrollButton && (
-                        <button className="scroll-to-bottom" onClick={scrollToBottom} title="Rolar para baixo">
+                        <button onClick={scrollToBottom}
+                            className="absolute bottom-24 right-5 w-10 h-10 bg-primary text-white rounded-full shadow-lg flex items-center justify-center text-lg hover:-translate-y-0.5 hover:shadow-xl transition-all z-10">
                             ⬇️
                         </button>
                     )}
 
+                    {/* Reply bar */}
                     {replyTo && (
-                        <div className="reply-bar-container">
-                            <div className="reply-bar-content">
-                                <div className="reply-bar-left">
-                                    <span className="reply-bar-label">Respondendo a {replyTo.username}</span>
-                                    <span className="reply-bar-text">{replyTo.message.substring(0, 50)}...</span>
+                        <div className="px-4 py-2 bg-surface border-t border-theme shrink-0">
+                            <div className="flex items-center justify-between px-3 py-2 bg-theme border-l-2 border-primary rounded-xl">
+                                <div>
+                                    <div className="text-xs font-semibold text-primary mb-0.5">Respondendo a {replyTo.username}</div>
+                                    <div className="text-xs text-muted truncate max-w-xs">{replyTo.message.substring(0, 60)}…</div>
                                 </div>
-                                <button className="reply-bar-close" onClick={cancelReply}>✗</button>
+                                <button onClick={cancelReply} className="w-6 h-6 flex items-center justify-center rounded text-muted hover:text-theme">✗</button>
                             </div>
                         </div>
                     )}
 
-                    <form onSubmit={sendMessage} className="message-form">
-                        {showFormatToolbar && (
-                            <div className="format-toolbar">
-                                <button type="button" onClick={() => insertFormatting('bold')} className="format-btn" title="Negrito">
-                                    <strong>B</strong>
+                    {/* Format toolbar */}
+                    {showFormatToolbar && (
+                        <div className="flex gap-1 px-4 py-2 bg-surface border-t border-theme shrink-0 overflow-x-auto">
+                            {[
+                                { label: 'B', format: 'bold', title: 'Negrito', cls: 'font-bold' },
+                                { label: 'I', format: 'italic', title: 'Itálico', cls: 'italic' },
+                                { label: 'S', format: 'strike', title: 'Tachado', cls: 'line-through' },
+                                { label: '<>', format: 'code', title: 'Código', cls: 'font-mono' },
+                            ].map(({ label, format, title, cls }) => (
+                                <button key={format} type="button" onClick={() => insertFormatting(format)} title={title}
+                                    className={`px-2.5 py-1.5 text-sm bg-theme border border-theme rounded-lg hover:bg-surface transition-colors ${cls}`}>
+                                    {label}
                                 </button>
-                                <button type="button" onClick={() => insertFormatting('italic')} className="format-btn" title="Itálico">
-                                    <em>I</em>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Emoji picker */}
+                    {showEmojiPicker && (
+                        <div ref={emojiPickerRef}
+                            className="absolute bottom-20 left-4 bg-theme border border-theme rounded-2xl p-3 grid grid-cols-8 gap-1 shadow-2xl z-50 max-w-[min(300px,calc(100vw-2rem))]">
+                            {EMOJI_LIST.map(emoji => (
+                                <button key={emoji} onClick={() => addEmoji(emoji)}
+                                    className="p-1.5 text-xl rounded-lg hover:bg-surface transition-colors">
+                                    {emoji}
                                 </button>
-                                <button type="button" onClick={() => insertFormatting('strike')} className="format-btn" title="Tachado">
-                                    <del>S</del>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Mention suggestions */}
+                    {showMentions && (
+                        <div className="absolute bottom-20 left-4 bg-theme border border-theme rounded-xl shadow-xl z-50 max-w-[260px] max-h-[180px] overflow-y-auto">
+                            {mentionSuggestions.map(user => (
+                                <button key={user} onClick={() => insertMention(user)}
+                                    className="w-full text-left px-4 py-2.5 text-sm hover:bg-surface transition-colors">
+                                    @{user}
                                 </button>
-                                <button type="button" onClick={() => insertFormatting('code')} className="format-btn" title="Código">
-                                    {'<>'}
-                                </button>
-                            </div>
-                        )}
-                        <input 
-                            type="file" 
-                            ref={fileInputRef}
-                            style={{display: 'none'}}
-                            onChange={handleFileUpload}
-                            accept="image/*,application/pdf,.doc,.docx,.txt"
-                        />
-                        <button
-                            type="button"
-                            className="format-toggle-btn"
-                            onClick={() => setShowFormatToolbar(!showFormatToolbar)}
-                            title="Ferramentas de formatação"
-                        >
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Message form */}
+                    <form onSubmit={sendMessage} className="flex items-end gap-2 px-4 py-3 bg-theme border-t border-theme shrink-0">
+                        <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileUpload} accept="image/*,application/pdf,.doc,.docx,.txt" />
+                        <button type="button" onClick={() => setShowFormatToolbar(!showFormatToolbar)} title="Formatação"
+                            className={`w-10 h-10 shrink-0 flex items-center justify-center rounded-xl border transition-colors text-base ${showFormatToolbar ? 'bg-primary border-primary text-white' : 'bg-surface border-theme hover:bg-theme'}`}>
                             🎨
                         </button>
-                        <button
-                            type="button"
-                            className={`file-btn ${isSendingFile ? 'sending-indicator' : ''}`}
-                            onClick={() => fileInputRef.current.click()}
-                            title="Enviar arquivo (máx 5MB)"
-                            disabled={isSendingFile}
-                        >
+                        <button type="button" onClick={() => fileInputRef.current.click()} disabled={isSendingFile} title="Enviar arquivo"
+                            className="w-10 h-10 shrink-0 flex items-center justify-center rounded-xl border border-theme bg-surface hover:bg-theme transition-colors text-base disabled:opacity-50">
                             {isSendingFile ? '⏳' : '📎'}
                         </button>
-                        <button
-                            type="button"
-                            className="emoji-btn"
-                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                        >
+                        <button type="button" onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            className="emoji-btn w-10 h-10 shrink-0 flex items-center justify-center rounded-xl border border-theme bg-surface hover:bg-theme transition-colors text-base">
                             😀
                         </button>
-                        {showEmojiPicker && (
-                            <div className="emoji-picker" ref={emojiPickerRef}>
-                                {EMOJI_LIST.map(emoji => (
-                                    <span key={emoji} onClick={() => addEmoji(emoji)}>
-                                        {emoji}
-                                    </span>
-                                ))}
-                            </div>
-                        )}
-                        {showMentions && (
-                            <div className="mention-suggestions">
-                                {mentionSuggestions.map(user => (
-                                    <div 
-                                        key={user} 
-                                        className="mention-item"
-                                        onClick={() => insertMention(user)}
-                                    >
-                                        @{user}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
                         <textarea
                             ref={messageInputRef}
                             value={message}
                             onChange={handleInputChange}
                             onKeyDown={handleKeyDown}
-                            placeholder="Digite sua mensagem... (Enter para enviar, Shift+Enter para nova linha)"
-                            className="message-input"
-                            autoComplete="off"
+                            placeholder="Mensagem… (Enter envia, Shift+Enter nova linha)"
+                            className="flex-1 px-3 py-2.5 text-sm bg-surface border border-theme rounded-xl resize-none min-h-[40px] max-h-[120px] focus-primary text-theme placeholder:text-muted transition-colors"
                             rows={1}
+                            autoComplete="off"
                         />
-                        <button 
-                            type="submit" 
-                            className={`send-button ${isSending ? 'sending' : ''}`}
-                            disabled={isSending}
-                        >
-                            {isSending ? '⏳' : '📨'} Enviar
+                        <button type="submit" disabled={isSending}
+                            className={`h-10 px-4 shrink-0 bg-primary text-white font-semibold text-sm rounded-xl hover:bg-primary-dark active:scale-95 transition-all disabled:opacity-50 ${isSending ? 'opacity-60' : ''}`}>
+                            {isSending ? '⏳' : '📨'}
                         </button>
                     </form>
-                </div>
+                </main>
             </div>
         </div>
     );
