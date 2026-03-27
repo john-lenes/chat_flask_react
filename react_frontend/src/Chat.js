@@ -89,6 +89,8 @@ const Chat = () => {
     const settingsPanelRef = useRef(null);
     const usersListPanelRef = useRef(null);
     const emojiPickerRef = useRef(null);
+    // Ref to always hold latest messages without stale-closure issues
+    const messagesRef = useRef([]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -101,6 +103,7 @@ const Chat = () => {
     };
 
     useEffect(() => {
+        messagesRef.current = messages;
         scrollToBottom();
     }, [messages]);
 
@@ -324,16 +327,19 @@ const Chat = () => {
         // Mudança de sala
         socket.on('room_changed', (data) => {
             console.log('Sala alterada para:', data.room);
-            // Salvar mensagens da sala atual antes de mudar
+            // Use messagesRef to avoid stale-closure reading old messages state
             setRoomMessages(prev => ({
                 ...prev,
-                [currentRoom]: messages
+                [currentRoom]: messagesRef.current
             }));
-            
             setCurrentRoom(data.room);
-            
-            // Carregar mensagens da nova sala do cache (se existirem)
-            setMessages([]); // Limpa temporariamente
+            setMessages([]);
+        });
+
+        // Erros do servidor (ex: username em uso)
+        socket.on('error', (data) => {
+            alert('\u274C ' + (data.message || 'Erro de conex\u00E3o'));
+            setJoined(false);
         });
 
         // Receber histórico quando entrar em sala
@@ -426,8 +432,9 @@ const Chat = () => {
             socket.off('reaction_updated');
             socket.off('message_edited');
             socket.off('message_deleted');
+            socket.off('error');
         };
-    }, [username, soundEnabled, notificationsEnabled, currentRoom, playNotificationSound, showNotification, messages]);
+    }, [username, soundEnabled, notificationsEnabled, currentRoom, playNotificationSound, showNotification]);
 
     const handleJoin = (e) => {
         e.preventDefault();
@@ -673,24 +680,37 @@ const Chat = () => {
         return text.includes(`@${username}`);
     };
 
-    // Text formatting functions
+    // Escape HTML to prevent XSS before applying markdown transforms
+    const escapeHtml = (raw) => {
+        return raw
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    };
+
+    // Text formatting functions — always escape first, then apply markdown
     const formatText = (text) => {
         if (!text) return text;
-        
+
+        // Escape raw HTML to prevent XSS
+        text = escapeHtml(text);
+
         // Bold: **text** or __text__
         text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         text = text.replace(/__(.*?)__/g, '<strong>$1</strong>');
-        
+
         // Italic: *text* or _text_
         text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
         text = text.replace(/_(.*?)_/g, '<em>$1</em>');
-        
+
         // Code: `text`
         text = text.replace(/`(.*?)`/g, '<code>$1</code>');
-        
+
         // Strike: ~~text~~
         text = text.replace(/~~(.*?)~~/g, '<del>$1</del>');
-        
+
         return text;
     };
 
@@ -1429,16 +1449,16 @@ const Chat = () => {
                     <form onSubmit={sendMessage} className="message-form">
                         {showFormatToolbar && (
                             <div className="format-toolbar">
-                                <button type="button" onClick={() => insertFormatting('**', '**')} className="format-btn" title="Negrito">
+                                <button type="button" onClick={() => insertFormatting('bold')} className="format-btn" title="Negrito">
                                     <strong>B</strong>
                                 </button>
-                                <button type="button" onClick={() => insertFormatting('*', '*')} className="format-btn" title="Itálico">
+                                <button type="button" onClick={() => insertFormatting('italic')} className="format-btn" title="Itálico">
                                     <em>I</em>
                                 </button>
-                                <button type="button" onClick={() => insertFormatting('~~', '~~')} className="format-btn" title="Tachado">
+                                <button type="button" onClick={() => insertFormatting('strike')} className="format-btn" title="Tachado">
                                     <del>S</del>
                                 </button>
-                                <button type="button" onClick={() => insertFormatting('`', '`')} className="format-btn" title="Código">
+                                <button type="button" onClick={() => insertFormatting('code')} className="format-btn" title="Código">
                                     {'<>'}
                                 </button>
                             </div>
