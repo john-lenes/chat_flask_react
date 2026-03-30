@@ -228,12 +228,13 @@ def handle_message(data):
         message_text = sanitize_text(data)
     else:
         message_text = sanitize_text(data.get('message', ''))
-        reply_to = data.get('replyTo')
-
-    if not message_text:
-        return
-
-    if message_text.startswith('/'):
+        raw_reply = data.get('replyTo')
+        if isinstance(raw_reply, dict):
+            reply_to = {
+                'id': raw_reply.get('id'),
+                'username': sanitize_text(str(raw_reply.get('username', '')))[:MAX_USERNAME_LENGTH],
+                'message': sanitize_text(str(raw_reply.get('message', '')))[:100],
+            }
         handle_command(message_text, room)
         return
 
@@ -303,7 +304,10 @@ def handle_command(command: str, room: str):
             emit('command_response', {'message': 'Uso: /dm @usuario mensagem', 'type': 'error'})
             return
         target_user = raw[1].lstrip('@')
-        msg_text = raw[2]
+        msg_text = sanitize_text(raw[2])
+        if not msg_text:
+            emit('command_response', {'message': 'Mensagem não pode estar vazia.', 'type': 'error'})
+            return
         target_sid = next(
             (sid for sid, u in connected_users.items()
              if u['username'].lower() == target_user.lower()),
@@ -397,9 +401,9 @@ def handle_command(command: str, room: str):
     elif cmd == '/about':
         emit('command_response', {
             'message': (
-                '💬 Chat em Tempo Real v2.0\n'
+                '💬 Chat em Tempo Real v3.6\n'
                 '✨ Recursos: Salas, DMs, Reações, Upload de arquivos\n'
-                '🛠️ Tecnologias: Flask + Socket.IO + React'
+                '🛠️ Tecnologias: Flask + Socket.IO + React + Tailwind CSS'
             ),
             'type': 'info',
         })
@@ -457,7 +461,7 @@ def handle_upload_file(data):
     room = user_data['room']
 
     file_data = data.get('file', '')
-    file_name = sanitize_text(data.get('filename', ''))
+    file_name = sanitize_text(data.get('filename', ''))[:255]
     file_type = data.get('type', 'file')
 
     if not file_data or not file_name:

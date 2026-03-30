@@ -1,5 +1,73 @@
 # Changelog - Chat em Tempo Real
 
+## [3.6.0] - 2026-03-30
+
+### 🧹 Limpeza e Segurança
+- **Removidos arquivos redundantes**: `Chat.css`, `Chat_new.css`, `Chat_old_backup.css` (substituídos por Tailwind/index.css) e `package-lock.json` raiz órfão
+- **Adicionado `.env.example`**: Template documentando todas as variáveis de ambiente necessárias
+- **Sanitização do comando `/dm`**: Texto da mensagem privada agora passa por `sanitize_text()` no backend
+- **Validação de `replyTo`**: Campos do objeto de resposta validados e sanitizados individualmente no backend, impedindo injeção de dados não confiáveis
+- **Limite de filename**: Nome de arquivo truncado a 255 caracteres no upload
+- **Versão atualizada** no comando `/about` (v3.6.0)
+- **README** completamente reescrito: tecnologias atuais (Tailwind CSS 3), guia de instalação, estrutura de arquivos e seção de segurança
+
+---
+
+## [3.5.0] - Migração completa para Tailwind CSS
+
+### 🎨 Design e Estilo
+- **Migração completa** de CSS customizado para Tailwind CSS v3
+- Instalação de `tailwindcss`, `postcss` e `autoprefixer`
+- `tailwind.config.js` e `postcss.config.js` configurados
+- `src/index.css` com diretivas `@tailwind` + variáveis CSS customizadas para temas
+- Remoção de `import './Chat.css'` do `Chat.js`
+- Design moderno tipo messenger: balões arredondados para mensagens
+- Botões com tamanho uniforme (`w-10 h-10` para formulário, `h-9` para header)
+- Dark mode via classe `html.dark`; temas via `body[data-theme]`
+- Build final: zero warnings, ~5 kB CSS gzip
+
+---
+
+## [3.4.0] - Padronização de layout e design consistente
+
+### 🎨 Design
+- Adicionados tokens de design ao `:root` (`--radius-*`, `--shadow-*`, `--warning-surface`, `--focus-ring`)
+- Estilo consistente para balões de mensagens próprias
+- Removido uso de `color-mix()` (compatibilidade cross-browser)
+- Removido CSS morto de `.users-list-panel`
+
+---
+
+## [3.3.0] - Biblioteca de toasts e padronização CSS
+
+### ✨ UX
+- Instalação de `react-hot-toast ^2.6.0`
+- Todos os `alert()` e `window.confirm()` substituídos por toasts não bloqueantes
+- 19 classes CSS faltantes adicionadas a `Chat.css`
+- Toggle mobile do sidebar corrigido
+
+---
+
+## [3.2.0] - Revisão completa de qualidade
+
+### 🔒 Segurança
+- Corrigido XSS via `dangerouslySetInnerHTML` — função `escapeHtml()` aplicada antes de markdown
+- `SECRET_KEY` carregada de variável de ambiente (nunca hardcoded)
+- Validação de username e sala com regex no backend
+- Rate limiting (0,5 s) e unicidade de usernames (case-insensitive)
+- CORS restrito por `CORS_ORIGINS` configurável
+
+### 🐛 Correções
+- Stale closure em handlers de socket — uso de `messagesRef.current`
+- Registro O(n²) de listeners — removida dependência `messages` do `useEffect`
+- Argumentos de `insertFormatting()` corrigidos na toolbar
+
+### 🏗️ Arquitetura
+- Backend reescrito com logging estruturado, sanitização centralizada e IDs de mensagem monotônicos
+- Separação de `handle_command()` em função própria
+
+---
+
 ## [3.1.0] - Melhorias de Performance e UX
 
 ### ✨ Novas Funcionalidades

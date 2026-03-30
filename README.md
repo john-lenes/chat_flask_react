@@ -1,12 +1,12 @@
 # Chat Flask + React
 
-Sistema de chat em tempo real com Flask (backend) e React (frontend), utilizando Socket.IO para comunicação WebSocket.
+Sistema de chat em tempo real com Flask (backend) e React (frontend), usando Socket.IO para comunicação WebSocket e Tailwind CSS v3 para estilização.
 
 ## 🚀 Funcionalidades
 
 ### Chat Básico
-- ✅ Salas de chat múltiplas
-- ✅ Mensagens em tempo real
+- ✅ Salas de chat múltiplas (criação dinâmica)
+- ✅ Mensagens em tempo real via WebSocket
 - ✅ Histórico de mensagens por sala
 - ✅ Indicador de digitação
 - ✅ Lista de usuários online
@@ -14,99 +14,103 @@ Sistema de chat em tempo real com Flask (backend) e React (frontend), utilizando
 - ✅ Cache de mensagens por sala (preserva histórico ao trocar de sala)
 
 ### Recursos Avançados
-- ✅ **Mensagens Privadas (DM)**: Use `/dm username mensagem`
-- ✅ **Reações**: 6 emojis disponíveis (👍 ❤️ 😂 🎉 😮 😢)
-- ✅ **Upload de Arquivos**: Envie imagens (preview automático) e documentos (até 5MB)
-- ✅ **Notificações Desktop**: Receba alertas quando alguém mencionar você
-- ✅ **Modo Escuro**: Interface adaptável com paleta Slate
+- ✅ **Mensagens Privadas (DM)**: Use `/dm @usuario mensagem`
+- ✅ **Reações**: 6 emojis com contagem e autores
+- ✅ **Upload de Arquivos**: Imagens (preview) e documentos até 5 MB
+- ✅ **Drag & Drop**: Arraste arquivos direto para a área do chat
+- ✅ **Edição e Exclusão**: Edite ou delete suas próprias mensagens
+- ✅ **Responder Mensagens**: Thread com preview da mensagem original
+- ✅ **@ Menções**: Autocompletar e destaque visual
+- ✅ **Busca no Histórico**: Pesquise mensagens com contador de resultados
+- ✅ **Fixar Mensagens**: Mensagens importantes fixadas no topo
+- ✅ **Notificações Desktop**: Alertas quando não está na aba
+- ✅ **Notificação Sonora**: Som de nova mensagem
+- ✅ **Modo Escuro**: Toggle completo (dark mode via classe `html.dark`)
+- ✅ **6 Temas Visuais**: Default, Oceano, Floresta, Pôr do Sol, Roxo Espaço, AMOLED
 
-### 🆕 Melhorias de Usabilidade (v3.0)
-- ✅ **Enter para Enviar**: Pressione Enter para enviar, Shift+Enter para nova linha
-- ✅ **Edição de Mensagens**: Edite suas próprias mensagens (botão ✏️ no hover)
-- ✅ **Exclusão de Mensagens**: Delete suas mensagens (botão 🗑️ no hover)
-- ✅ **@ Menções**: Autocompletar usuários ao digitar @ + nome
-- ✅ **Timestamps Hover**: Veja data/hora completa ao passar o mouse
-- ✅ **Scroll Inteligente**: Botão para voltar às mensagens recentes
-- ✅ **Feedback Visual**: Indicador de envio de mensagem
-- ✅ **Confirmação ao Sair**: Previne perda acidental de conversas
-- ✅ **Auto-Resize Textarea**: Campo de mensagem cresce automaticamente
-- ✅ **Copiar Mensagem**: Copie texto de qualquer mensagem com um clique
-- ✅ **Destacar @Menções**: Mensagens que mencionam você ficam destacadas
-
-### 🚀 Recursos Avançados (v3.0)
-- ✅ **Drag & Drop de Arquivos**: Arraste arquivos para a área do chat
-- ✅ **Responder Mensagens (Threads)**: Crie threads respondendo mensagens específicas
-- ✅ **Buscar no Histórico**: Pesquise mensagens anteriores com destaque visual
-
-### 🎨 TOP 6 - Features Premium (v3.0)
-- ✅ **Formatação de Texto**: Negrito, itálico, tachado, código inline com markdown
-- ✅ **6 Temas Visuais**: Default, Ocean, Forest, Sunset, Purple, AMOLED
-- ✅ **Contador de Não Lidas**: Badge com número de mensagens não lidas por sala
-- ✅ **Fixar Mensagens**: Fixe mensagens importantes no topo do chat
-- ✅ **Reações Rápidas**: Menu de 6 reações ao passar mouse sobre mensagens
-- ✅ **Preview de Links**: Detecção automática e preview de URLs compartilhadas
+### Formatação de Texto (Markdown inline)
+| Sintaxe | Resultado |
+|---------|-----------|
+| `**negrito**` | **negrito** |
+| `*itálico*` | *itálico* |
+| `~~tachado~~` | ~~tachado~~ |
+| `` `código` `` | `código` |
 
 ### Comandos Disponíveis
 
-| Comando | Descrição | Exemplo |
-|---------|-----------|---------|
-| `/dm <usuário> <msg>` | Enviar mensagem privada | `/dm João Olá!` |
-| `/nick <novo_nome>` | Alterar seu nome de usuário | `/nick JohnSilva` |
-| `/rooms` | Listar todas as salas disponíveis | `/rooms` |
-| `/status <estado>` | Alterar seu status | `/status ausente` |
-| `/clear` | Limpar histórico da sala atual | `/clear` |
-| `/help` | Mostrar lista de comandos | `/help` |
-| `/users` | Listar usuários online | `/users` |
-| `/me <ação>` | Mensagem em terceira pessoa | `/me está pensando...` |
-| `/shrug` | Adiciona ¯\_(ツ)_/¯ | `/shrug não sei` |
-| `/tableflip` | Envia (╯°□°)╯︵ ┻━┻ | `/tableflip` |
-| `/about` | Informações sobre o chat | `/about` |
-| `/time` | Mostra hora e data atual | `/time` |
+| Comando | Descrição |
+|---------|-----------|
+| `/help` | Lista todos os comandos |
+| `/users` | Lista usuários online na sala |
+| `/rooms` | Lista todas as salas |
+| `/dm @usuario msg` | Envia mensagem privada |
+| `/status online\|ausente\|ocupado` | Altera seu status |
+| `/me <ação>` | Mensagem em terceira pessoa |
+| `/roll` | Rola um dado de 6 lados |
+| `/clear` | Limpa mensagens (local) |
+| `/shrug` | Adiciona ¯\_(ツ)_/¯ |
+| `/tableflip` | Envia (╯°□°)╯︵ ┻━┻ |
+| `/about` | Informações sobre o chat |
+| `/time` | Hora e data atual |
 
-## 📋 Requisitos
+## 📋 Tecnologias
 
-### Backend (Python)
+### Backend
 - Python 3.13
 - Flask 3.0.0
 - Flask-SocketIO 5.3.5
-- Flask-CORS
-- python-socketio
+- Flask-CORS 4.0.0
 - simple-websocket
 
-### Frontend (React)
-- Node.js 16+
+### Frontend
 - React 18.2.0
+- Tailwind CSS 3
 - Socket.IO-client 4.5.4
+- react-hot-toast 2.6.0
 
 ## 🔧 Instalação
 
 ### 1. Clone o repositório
 ```bash
-cd chat_flask_react_project
+git clone https://github.com/john-lenes/chat_flask_react.git
+cd chat_flask_react
 ```
 
 ### 2. Configure o Backend
 
 ```bash
-# Entre na pasta do backend
 cd flask_backend
 
-# Crie um ambiente virtual (Windows)
+# Crie e ative o ambiente virtual
 python -m venv .venv
-.venv\Scripts\Activate.ps1
+source .venv/bin/activate        # Linux/Mac
+# .venv\Scripts\Activate.ps1    # Windows
 
-# Instale as dependências
 pip install -r requirements.txt
 ```
 
-### 3. Configure o Frontend
+### 3. Configure as variáveis de ambiente
 
 ```bash
-# Entre na pasta do frontend
-cd react_frontend
+# Copie o template e preencha os valores
+cp .env.example .env
+```
 
-# Instale as dependências
+Edite `.env` e defina pelo menos `SECRET_KEY` com um valor seguro:
+```bash
+python -c "import secrets; print(secrets.token_hex(32))"
+```
+
+### 4. Configure o Frontend
+
+```bash
+cd react_frontend
 npm install
+```
+
+Para apontar para um backend remoto, crie `react_frontend/.env.local`:
+```
+REACT_APP_BACKEND_URL=https://seu-backend.onrender.com
 ```
 
 ## ▶️ Executando o Projeto
@@ -114,180 +118,97 @@ npm install
 ### Backend (Terminal 1)
 ```bash
 cd flask_backend
-.venv\Scripts\Activate.ps1
+source .venv/bin/activate
 python app.py
 ```
-O servidor Flask estará rodando em `http://localhost:5000`
+Servidor disponível em `http://localhost:5000`
 
 ### Frontend (Terminal 2)
 ```bash
 cd react_frontend
 npm start
 ```
-O React estará rodando em `http://localhost:3000`
+Aplicação disponível em `http://localhost:3000`
 
 ## 📁 Estrutura do Projeto
 
 ```
-chat_flask_react_project/
+chat_flask_react/
+├── .env.example               # Template de variáveis de ambiente
+├── .gitignore
+├── Procfile                   # Deploy Heroku/Render
+├── render.yaml                # Configuração Render
+├── README.md
 │
 ├── flask_backend/
 │   ├── app.py                 # Servidor Flask + Socket.IO
 │   ├── requirements.txt       # Dependências Python
-│   └── uploads/               # Arquivos enviados pelos usuários
+│   └── uploads/               # Arquivos enviados (ignorado pelo git)
 │
 └── react_frontend/
-    ├── src/
-    │   ├── App.js            # Componente principal
-    │   ├── Chat.js           # Componente de chat
-    │   ├── Chat.css          # Estilos do chat
-    │   └── index.js          # Entry point
+    ├── package.json
+    ├── tailwind.config.js
+    ├── postcss.config.js
     ├── public/
-    │   └── index.html        # HTML base
-    └── package.json          # Dependências Node
-```
-
-## 🎯 Como Usar
-
-### Entrar no Chat
-1. Abra `http://localhost:3000`
-2. Digite seu nome de usuário
-3. Escolha ou crie uma sala
-4. Clique em "Entrar"
-
-### Trocar de Sala
-- Selecione uma sala existente no dropdown
-- Ou clique em "➕ Nova Sala" para criar uma nova
-
-### Enviar Mensagens
-- Digite sua mensagem no campo de texto
-- Pressione Enter ou clique em "Enviar"
-- Use comandos começando com `/` para funções especiais
-
-### Mensagens Privadas
-```
-/dm NomeDoUsuario Sua mensagem privada aqui
-```
-
-### Reações
-- Clique no ícone 😊 ao lado de qualquer mensagem
-- Escolha uma das 6 reações disponíveis
-- Veja quem reagiu passando o mouse sobre a reação
-
-### Upload de Arquivos
-- Clique no ícone 📎
-- Selecione um arquivo (máx. 5MB)
-- Imagens mostram preview automático
-- Documentos têm link de download
-
-### Alterar Status
-```
-/status online      # Status online (verde)
-/status ausente     # Status ausente (amarelo)
-/status ocupado     # Status ocupado (vermelho)
+    │   └── index.html
+    └── src/
+        ├── App.js
+        ├── Chat.js            # Componente principal do chat
+        ├── index.js
+        └── index.css          # Tailwind + variáveis de tema
 ```
 
 ## 🔒 Segurança
 
-- Validação de tamanho de arquivo (máx. 5MB)
-- Sanitização de nomes de usuário e salas
-- CORS configurado para permitir localhost:3000
-- Arquivos salvos com nomes seguros (UUID)
+- `SECRET_KEY` carregada via variável de ambiente
+- Validação e sanitização de todos os inputs no backend (username, sala, mensagens, reply, filename)
+- Rate limiting: mínimo 0,5 s entre mensagens por usuário
+- Unicidade de usernames (case-insensitive)
+- CORS restrito às origens configuradas em `CORS_ORIGINS`
+- Tamanho máximo de arquivo validado nos dois lados (5 MB)
+- XSS prevenido via `escapeHtml()` antes de aplicar markdown no frontend
+- Links externos com `rel="noopener noreferrer"`
 
 ## 🐛 Troubleshooting
 
 ### Backend não inicia
 ```bash
-# Verifique se o ambiente virtual está ativo
-.venv\Scripts\Activate.ps1
-
-# Reinstale as dependências
+# Verifique o ambiente virtual e reinstale as dependências
 pip install -r requirements.txt
 ```
 
-### Frontend não conecta
-- Verifique se o backend está rodando na porta 5000
-- Confirme que não há firewall bloqueando
-- Veja o console do navegador para erros
-
-### Mensagens não aparecem
-- Verifique se você entrou em uma sala
-- Confirme que o Socket.IO está conectado (veja console)
-- Teste em modo de navegação anônima
+### Frontend não conecta ao backend
+- Confirme que o backend está rodando na porta 5000
+- Verifique `REACT_APP_BACKEND_URL` em `react_frontend/.env.local`
+- Inspecione o console do navegador para erros de WebSocket
 
 ### Upload de arquivo falha
-- Verifique o tamanho do arquivo (máx. 5MB)
-- Confirme que a pasta `uploads/` existe
-- Veja os logs do backend para erros
-
-## 🎨 Personalização
-
-### Alterar cores do tema
-Edite `react_frontend/src/Chat.css`:
-```css
-:root {
-    --primary-color: #007bff;
-    --secondary-color: #6c757d;
-    /* ... outras variáveis */
-}
-```
-
-### Adicionar novos comandos
-Edite `flask_backend/app.py`:
-1. Adicione o comando no dicionário `COMMANDS`
-2. Implemente o handler em `handle_command()`
-
-### Modificar limite de upload
-Em `flask_backend/app.py`:
-```python
-MAX_FILE_SIZE = 5 * 1024 * 1024  # Altere para o tamanho desejado
-```
+- Verifique o tamanho (máx. 5 MB)
+- Confirme que a pasta `flask_backend/uploads/` existe
 
 ## 📝 Notas Técnicas
 
-### Por que threading ao invés de eventlet?
-- Python 3.13 tem incompatibilidades com eventlet
-- simple-websocket é usado como alternativa
-- Threading mode é estável para uso em desenvolvimento
+### Modo threading
+Flask-SocketIO usa `async_mode='threading'` com `simple-websocket` por compatibilidade com Python 3.13 (eventlet tem incompatibilidades nesta versão).
 
-### Estrutura de Dados
-- `connected_users`: {sid: {username, room, color, status}}
-- `rooms`: {room_name: [message_history]}
-- `message_reactions`: {message_id: {emoji: [usernames]}}
+### Estrutura de Dados em Memória
+- `connected_users`: `{sid: {username, room, color, status}}`
+- `rooms`: `{room_name: [message_dicts]}`
+- `message_reactions`: `{message_id: {emoji: [usernames]}}`
 
-### WebSocket Events
-- `join`: Entrar em uma sala
-- `message`: Enviar mensagem
-- `typing`: Indicador de digitação
-- `change_room`: Trocar de sala
-- `add_reaction`: Adicionar reação
-- `upload_file`: Upload de arquivo
-- `request_dm`: Enviar mensagem privada
-
-## 🚧 Melhorias Futuras
-
-- [ ] Sistema de autenticação (login/senha)
-- [ ] Persistência de mensagens (banco de dados)
-- [ ] Chamadas de voz/vídeo
-- [ ] Sistema de administração de salas
-- [ ] Banir/silenciar usuários
-- [ ] Exportar histórico de chat
-- [ ] Criptografia end-to-end
-- [ ] Emojis personalizados
-- [ ] Temas customizáveis pelo usuário
-- [ ] Suporte a GIFs e Stickers
+### Temas e Dark Mode (Tailwind)
+- Dark mode: classe `dark` no elemento `html`
+- Temas: atributo `data-theme` no `body` (ex: `body[data-theme="ocean"]`)
+- Tokens de cor definidos em `src/index.css` como variáveis CSS customizadas
 
 ## 📄 Licença
 
-Este projeto é de uso livre para fins educacionais.
+Projeto de uso livre para fins educacionais.
 
-## 👤 Autor John Lenes Silva
+## 👤 Autor
 
-Desenvolvido como projeto de chat em tempo real com Flask e React.
+John Lenes Silva — Projeto de chat em tempo real com Flask e React.
 
 ---
 
-**Versão**: 3.0.0  
-**Data**: Dezembro 2025  
-**Stack**: Flask 3.0 + React 18 + Socket.IO  
-**Total de Features**: 20 melhorias de usabilidade implementadas
+**Versão**: 3.6.0 | **Stack**: Flask 3.0 + React 18 + Tailwind CSS 3 + Socket.IO
